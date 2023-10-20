@@ -50,10 +50,7 @@ const inventoryFetcher = async (page, keyword) => {
   if (keyword) params.keyword = keyword;
 
   try {
-    const response = await inventoryApi.get<InventoryData[]>(
-      `${INVENTORY_DATA_KEY}/paging/search`,
-      { params }
-    );
+    const response = await inventoryApi.get<InventoryData[]>(`${INVENTORY_DATA_KEY}/paging/search`, { params });
     return response.data;
   } catch (e) {
     console.error("인벤토리 데이터 가져오기 에러:", e);
@@ -65,7 +62,7 @@ export const useInventoryDataPaged = (page, keyword) => {
   const { data: pageData = INIT_DATA, error } = useSWR<Page<InventoryData>>(
     [INVENTORY_DATA_KEY + "/paging/search", page, keyword], // Remove 'size' from here
     () => inventoryFetcher(page),
-    { fallbackData: INIT_DATA }
+    { fallbackData: INIT_DATA },
   );
 
   if (error) console.error("인벤토리 데이터 가져오기 에러:", error);
@@ -87,12 +84,7 @@ const InventoryComponent = () => {
   return (
     <div>
       <h1>Inventory Page</h1>
-      <input
-        type="text"
-        value={keyword}
-        onChange={(e) => setKeyword(e.target.value)}
-        placeholder="Search..."
-      />
+      <input type="text" value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="Search..." />
       <button onClick={executeSearch}>검색</button>
       <table>
         <thead>
@@ -149,41 +141,24 @@ const InventoryComponent = () => {
           First Page
         </button>
 
-        <button
-          onClick={() => setPage((prevPage) => Math.max(prevPage - 1), 0)}
-          disabled={page === 1}
-        >
+        <button onClick={() => setPage((prevPage) => Math.max(prevPage - 1), 0)} disabled={page === 1}>
           Previous Page
         </button>
 
         {/* 페이지 번호를 표시하는 부분 */}
         {Array.from({ length: Math.min(pageData.totalPages, 5) }, (_, i) =>
-          page <= 3
-            ? i + 1
-            : page >= pageData.totalPages - 2
-            ? pageData.totalPages - 4 + i
-            : page - 2 + i
+          page <= 3 ? i + 1 : page >= pageData.totalPages - 2 ? pageData.totalPages - 4 + i : page - 2 + i,
         ).map((pageNum) => (
-          <button
-            key={pageNum}
-            onClick={() => setPage(pageNum)}
-            disabled={page === pageNum}
-          >
+          <button key={pageNum} onClick={() => setPage(pageNum)} disabled={page === pageNum}>
             {pageNum}
           </button>
         ))}
 
-        <button
-          onClick={() => setPage((prevPage) => prevPage + 1)}
-          disabled={page >= pageData.totalPages}
-        >
+        <button onClick={() => setPage((prevPage) => prevPage + 1)} disabled={page >= pageData.totalPages}>
           Next Page
         </button>
 
-        <button
-          onClick={() => setPage(pageData.totalPages)}
-          disabled={page === pageData.totalPages}
-        >
+        <button onClick={() => setPage(pageData.totalPages)} disabled={page === pageData.totalPages}>
           Last Page
         </button>
       </footer>
