@@ -38,6 +38,9 @@ const additionalColumns = [
 const BookTable: React.FC = () => {
   // 여기에서 books를 상태로 선언합니다.
   const [books, setBooks] = useState<SimplifiedBook[]>([]);
+  //검색
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredBooks, setFilteredBooks] = useState<SimplifiedBook[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [viewAll, setViewAll] = useState(false);
@@ -46,7 +49,9 @@ const BookTable: React.FC = () => {
   const itemsPerPage = 100;
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentBooks = books.slice(indexOfFirstItem, indexOfLastItem);
+  const currentBooks = searchTerm
+    ? filteredBooks.slice(indexOfFirstItem, indexOfLastItem)
+    : books.slice(indexOfFirstItem, indexOfLastItem);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -59,7 +64,7 @@ const BookTable: React.FC = () => {
         }
         const data = await response.json();
         console.log(data[0]);
-        setBooks(data); // 가정: API의 응답이 도서 배열
+        setBooks(data); // books 상태 변경
       } catch (error) {
         setError(error.message);
         console.log(error);
@@ -100,6 +105,23 @@ const BookTable: React.FC = () => {
     navigate(`/book/detail/${id}`);
   };
 
+  //검색
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
+  };
+
+  const handleSearch = () => {
+    const results = books.filter((book) =>
+      Object.keys(book).some((key) => book[key].toString().toLowerCase().includes(searchTerm.toLowerCase())),
+    );
+    setFilteredBooks(results);
+  };
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      handleSearch();
+    }
+  };
+
   if (loading) {
     return <p>Loading...</p>;
   }
@@ -114,6 +136,17 @@ const BookTable: React.FC = () => {
         <div>
           <button onClick={handleViewAll}>전체보기</button>
           <button onClick={handleViewPart}>일부보기</button>
+        </div>
+
+        <div>
+          <input
+            type="text"
+            placeholder="검색어를 입력하세요"
+            value={searchTerm}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown} // Enter 키 눌렀을 때 검색
+          />
+          <button onClick={handleSearch}>검색</button>
         </div>
 
         {/* true일때 */}
@@ -140,9 +173,21 @@ const BookTable: React.FC = () => {
                   {(viewAll ? columns.concat(additionalColumns) : columns).map((column) => (
                     <td key={column}>
                       {book[column] !== undefined ? (
-                        book[column]
+                        <div style={{ minWidth: column === "title" || column === "author" ? "250px" : "auto" }}>
+                          {typeof book[column] === "string" && searchTerm
+                            ? book[column].split(new RegExp(`(${searchTerm})`, "gi")).map((part, index) =>
+                                part.toLowerCase() === searchTerm.toLowerCase() ? (
+                                  <span key={index} style={{ backgroundColor: "yellow" }}>
+                                    {part}
+                                  </span>
+                                ) : (
+                                  part
+                                ),
+                              )
+                            : book[column]}
+                        </div>
                       ) : (
-                        <div style={{ display: "flex", textAlign: "center", justifyContent: "center" }}>-</div>
+                        <div style={{ textAlign: "center" }}>-</div>
                       )}
                     </td>
                   ))}
