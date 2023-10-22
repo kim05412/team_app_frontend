@@ -1,28 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
-// jsx스타일-css
-const tableStyle: React.CSSProperties = {
-  borderCollapse: "collapse",
-  width: "100%",
-  margin: "20px 0",
-};
-
-const thStyle: React.CSSProperties = {
-  backgroundColor: "#f2f2f2",
-  border: "1px solid #ddd",
-  padding: "12px",
-  textAlign: "left",
-};
-
-const tdStyle: React.CSSProperties = {
-  border: "1px solid #ddd",
-  padding: "12px",
-};
-
-const trStyle: React.CSSProperties = {
-  backgroundColor: "#f9f9f9",
-};
+import { BookContainer, TableContainer } from "./styles";
 
 interface SimplifiedBook {
   id: number;
@@ -44,12 +22,25 @@ interface SimplifiedBook {
   categoryName: string;
   customerReviewRank: number;
 }
+const columns = ["id", "createdDate", "publisher", "title", "author"];
+const additionalColumns = [
+  "pubDate",
+  "isbn",
+  "isbn13",
+  "itemId",
+  "priceSales",
+  "priceStandard",
+  "cover",
+  "categoryId",
+  "customerReviewRank",
+];
 
 const BookTable: React.FC = () => {
   // 여기에서 books를 상태로 선언합니다.
   const [books, setBooks] = useState<SimplifiedBook[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [viewAll, setViewAll] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 100;
@@ -67,6 +58,7 @@ const BookTable: React.FC = () => {
           throw new Error("Network response was not ok");
         }
         const data = await response.json();
+        console.log(data[0]);
         setBooks(data); // 가정: API의 응답이 도서 배열
       } catch (error) {
         setError(error.message);
@@ -77,11 +69,33 @@ const BookTable: React.FC = () => {
     };
     fetchData();
   }, []);
+  // 일부 데이터만 보여주는 함수
+  const handleViewPart = () => {
+    setViewAll(false);
+  };
+
+  // SimplifiedBook의 모든 데이터를 보여주는 페이지로 이동
+  const handleViewAll = () => {
+    setViewAll(true);
+    // navigate("/book/detail");
+  };
+
+  // 추가, 수정, 삭제 함수 (아직 구현하지 않음)
+  const handleAdd = () => {
+    console.log("Add");
+  };
+  const handleEdit = (id: number) => {
+    console.log("Edit", id);
+  };
+
+  const handleDelete = (id: number) => {
+    console.log("Delete", id);
+  };
 
   //페이지 이동
   const navigate = useNavigate();
 
-  //특정 ehtj의 상세 페이지로 이동
+  //특정 도서의 상세 페이지로 이동
   const handleClickItem = (id: number) => {
     navigate(`/book/detail/${id}`);
   };
@@ -95,47 +109,59 @@ const BookTable: React.FC = () => {
   }
 
   return (
-    <div>
-      {/* true일때 */}
-      {/* {loading && <p>Loading...</p>} */}
-      {/* false일때 table */}
-      <table style={tableStyle}>
-        <thead>
-          <tr>
-            <th style={thStyle}>ID</th>
-            <th style={thStyle}>Created Date</th>
-            <th style={thStyle}>Publisher</th>
-            <th style={thStyle}>Title</th>
-            <th style={thStyle}>Author</th>
-          </tr>
-        </thead>
-        <tbody>
-          {currentBooks.map((book) => (
-            <tr
-              key={book.id}
-              style={trStyle}
-              onClick={() => {
-                handleClickItem(book.id);
-              }}>
-              <td style={tdStyle}>{book.id}</td>
-              <td style={tdStyle}>{book.createdDate}</td>
-              <td style={tdStyle}>{book.publisher}</td>
-              <td style={tdStyle}>{book.title}</td>
-              <td style={tdStyle}>{book.author}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <BookContainer>
       <div>
-        {/* 페이징컨트롤 */}
-        <button onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>
-          Previous
-        </button>
-        <button onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage * itemsPerPage >= books.length}>
-          Next
-        </button>
+        <div>
+          <button onClick={handleViewAll}>전체보기</button>
+          <button onClick={handleViewPart}>일부보기</button>
+        </div>
+
+        {/* true일때 */}
+        {/* {loading && <p>Loading...</p>} */}
+        {/* false일때 table */}
+        <TableContainer>
+          <table>
+            <thead>
+              <tr>
+                {columns.map((column) => (
+                  <th key={column}>{column}</th>
+                ))}
+                {/* 추가 */}
+                {viewAll && additionalColumns.map((column) => <th key={column}>{column}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {currentBooks.map((book) => (
+                <tr
+                  key={book.id}
+                  onClick={() => {
+                    handleClickItem(book.id);
+                  }}>
+                  {(viewAll ? columns.concat(additionalColumns) : columns).map((column) => (
+                    <td key={column}>
+                      {book[column] !== undefined ? (
+                        book[column]
+                      ) : (
+                        <div style={{ display: "flex", textAlign: "center", justifyContent: "center" }}>-</div>
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </TableContainer>
+        <div>
+          {/* 페이징컨트롤 */}
+          <button onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>
+            Previous
+          </button>
+          <button onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage * itemsPerPage >= books.length}>
+            Next
+          </button>
+        </div>
       </div>
-    </div>
+    </BookContainer>
   );
 };
 export default BookTable;
