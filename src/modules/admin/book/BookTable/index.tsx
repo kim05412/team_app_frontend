@@ -201,6 +201,11 @@ const BookTable: React.FC = () => {
           <button onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>
             Previous
           </button>
+          {[...Array(Math.ceil(books.length / itemsPerPage))].map((_, index) => (
+            <button key={index} onClick={() => setCurrentPage(index + 1)} disabled={currentPage === index + 1}>
+              {index + 1}
+            </button>
+          ))}
           <button onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage * itemsPerPage >= books.length}>
             Next
           </button>
