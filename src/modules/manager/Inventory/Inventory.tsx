@@ -3,12 +3,14 @@ import { useEffect, useState } from "react";
 import { useHistory, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import useSWR from "swr";
+import Modal from "./modal";
 
 const inventoryApi = axios.create({
   baseURL: "http://localhost:8080",
 });
 
 interface InventoryData {
+  cover: string;
   id?: number;
   publisher: string;
   title: string;
@@ -23,14 +25,12 @@ interface InventoryData {
   priceSales: number;
   priceStandard: number;
   stockStatus: string;
-  cover: string;
 }
 
 interface Page<T> {
   content: T[];
   totalElements: number;
   totalPages: number;
-  number: number;
   size: number;
 }
 
@@ -40,7 +40,6 @@ const INIT_DATA: Page<InventoryData> = {
   content: [],
   totalElements: 0,
   totalPages: 0,
-  number: 0,
   size: PAGE_SIZE,
 };
 const INVENTORY_DATA_KEY = "/api/inventories";
@@ -108,6 +107,12 @@ const InventoryComponent = () => {
     }
   };
 
+  const handleCheckboxChange = (id) => {
+    setSelectedRowId(id);
+  };
+
+  const [selectedRowId, setSelectedRowId] = useState(null); // 선택된 행의 ID
+
   return (
     <div>
       <h1>Inventory Page</h1>
@@ -122,6 +127,7 @@ const InventoryComponent = () => {
       <table>
         <thead>
           <tr>
+            <th>.</th>
             <th>ID</th>
             <th>출판사</th>
             <th>제목</th>
@@ -142,8 +148,15 @@ const InventoryComponent = () => {
 
         <tbody>
           {pageData &&
-            pageData.content.map((item) => (
+            pageData.content.map((item, index) => (
               <tr key={item.id}>
+                <td>
+                  <input
+                    type="checkbox"
+                    checked={item.id === selectedRowId}
+                    onChange={() => handleCheckboxChange(item.id)}
+                  />
+                </td>
                 <td>{item.id}</td>
                 <td>{item.publisher}</td>
                 <td>{item.title}</td>
@@ -169,6 +182,23 @@ const InventoryComponent = () => {
             ))}
         </tbody>
       </table>
+
+      <button onClick={() => setSelectedRowId(selectedRowId)} disabled={selectedRowId === null}>
+        수정
+      </button>
+
+      {!!selectedRowId && (
+        <>
+          <div className="overlay"></div>
+
+          <Modal
+            rowData={pageData.content.find((item) => item.id === selectedRowId)}
+            onClose={() => setSelectedRowId(null)}
+            onSave={(editedItem) => console.log("Save edited Item:", editedItem)}
+          />
+        </>
+      )}
+
       <footer>
         <button onClick={() => changePageAndPushHistory(1)} disabled={page === 1}>
           First Page
