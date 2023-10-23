@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { BookContainer, TableContainer } from "./styles";
+import axios from "axios";
 
 interface SimplifiedBook {
   id: number;
@@ -53,27 +54,19 @@ const BookTable: React.FC = () => {
     ? filteredBooks.slice(indexOfFirstItem, indexOfLastItem)
     : books.slice(indexOfFirstItem, indexOfLastItem);
 
+  const fetchBooks = async () => {
+    try {
+      const response = await axios.get("/api/books/cached");
+      setBooks(response.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch("http://localhost:8080/api/books");
-        console.log(response);
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
-        const data = await response.json();
-        console.log(data[0]);
-        setBooks(data); // books 상태 변경
-      } catch (error) {
-        setError(error.message);
-        console.log(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+    fetchBooks();
   }, []);
+
   // 일부 데이터만 보여주는 함수
   const handleViewPart = () => {
     setViewAll(false);
