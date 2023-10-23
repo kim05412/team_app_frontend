@@ -1,6 +1,6 @@
 import axios from "axios";
-import { useState } from "react";
-import { useHistory } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useHistory, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import useSWR from "swr";
 
@@ -34,14 +34,14 @@ interface Page<T> {
   size: number;
 }
 
-const PAGE_SIZE = 10; // Add this line
+const PAGE_SIZE = 10;
 
 const INIT_DATA: Page<InventoryData> = {
   content: [],
   totalElements: 0,
   totalPages: 0,
   number: 0,
-  size: PAGE_SIZE, // Use the constant here
+  size: PAGE_SIZE,
 };
 const INVENTORY_DATA_KEY = "/api/inventories";
 
@@ -60,9 +60,13 @@ const inventoryFetcher = async (page, keyword) => {
 
 export const useInventoryDataPaged = (page, keyword) => {
   const { data: pageData = INIT_DATA, error } = useSWR<Page<InventoryData>>(
-    [INVENTORY_DATA_KEY + "/paging/search", page, keyword], // Remove 'size' from here
-    () => inventoryFetcher(page),
-    { fallbackData: INIT_DATA },
+    [INVENTORY_DATA_KEY + "/paging/search", page, keyword],
+    () => inventoryFetcher(page, keyword),
+    {
+      fallbackData: INIT_DATA,
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+    },
   );
 
   if (error) console.error("인벤토리 데이터 가져오기 에러:", error);
@@ -72,19 +76,48 @@ export const useInventoryDataPaged = (page, keyword) => {
 
 const InventoryComponent = () => {
   const [page, setPage] = useState(1);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const pageFromUrl = Number(queryParams.get("page"));
+    if (pageFromUrl) {
+      setPage(pageFromUrl);
+    }
+  }, [location]);
+
   const [keyword, setKeyword] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const pageData = useInventoryDataPaged(page, searchTerm);
 
+  const changePageAndPushHistory = (newPage) => {
+    setPage(newPage);
+    navigate(`?page=${newPage}`);
+  };
+
   const executeSearch = () => {
-    setPage(1); // 페이지를 초기화하고
-    setSearchTerm(page, keyword); // 검색을 실행합니다.
+    setPage(1);
+    setSearchTerm(keyword);
+  };
+
+  const handleKeyPress = (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      executeSearch();
+    }
   };
 
   return (
     <div>
       <h1>Inventory Page</h1>
-      <input type="text" value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="Search..." />
+      <input
+        type="text"
+        value={keyword}
+        onChange={(e) => setKeyword(e.target.value)}
+        onKeyPress={handleKeyPress}
+        placeholder="Search..."
+      />
       <button onClick={executeSearch}>검색</button>
       <table>
         <thead>
@@ -137,11 +170,11 @@ const InventoryComponent = () => {
         </tbody>
       </table>
       <footer>
-        <button onClick={() => setPage(1)} disabled={page === 1}>
+        <button onClick={() => changePageAndPushHistory(1)} disabled={page === 1}>
           First Page
         </button>
 
-        <button onClick={() => setPage((prevPage) => Math.max(prevPage - 1), 0)} disabled={page === 1}>
+        <button onClick={() => changePageAndPushHistory((prevPage) => Math.max(prevPage - 1), 0)} disabled={page === 1}>
           Previous Page
         </button>
 
@@ -149,16 +182,29 @@ const InventoryComponent = () => {
         {Array.from({ length: Math.min(pageData.totalPages, 5) }, (_, i) =>
           page <= 3 ? i + 1 : page >= pageData.totalPages - 2 ? pageData.totalPages - 4 + i : page - 2 + i,
         ).map((pageNum) => (
-          <button key={pageNum} onClick={() => setPage(pageNum)} disabled={page === pageNum}>
+          <button key={pageNum} onClick={() => changePageAndPushHistory(pageNum)} disabled={page === pageNum}>
             {pageNum}
           </button>
         ))}
 
-        <button onClick={() => setPage((prevPage) => prevPage + 1)} disabled={page >= pageData.totalPages}>
+        <button
+          onClick={() =>
+            changePageAndPushHistory(
+              (prevPage) =>
+                prevPage +
+                (page < pageData.totalPages
+                  ? // 만약 현재 페이지가 마지막 페이지보다 작다면,
+                    // 다음 페이지로 이동하도록 함.
+                    prevPage + 1
+                  : // 그렇지 않으면 현재 페이지 번호 유지.
+                    prevPage),
+            )
+          }
+          disabled={page >= pageData.totalPages}>
           Next Page
         </button>
 
-        <button onClick={() => setPage(pageData.totalPages)} disabled={page === pageData.totalPages}>
+        <button onClick={() => changePageAndPushHistory(pageData.totalPages)} disabled={page === pageData.totalPages}>
           Last Page
         </button>
       </footer>
