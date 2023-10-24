@@ -1,4 +1,6 @@
 {
+  "proxy": "http://localhost:8080",
+
   "scripts": {
     "start": "webpack serve --mode development --port 5000",
     "build": "webpack --mode production",

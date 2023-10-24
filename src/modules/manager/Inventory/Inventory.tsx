@@ -107,8 +107,16 @@ const InventoryComponent = () => {
     }
   };
 
+  const [isModalOpen, setIsModalOpen] = useState(false); // 모달 창이 열렸는지 여부
+
   const handleCheckboxChange = (id) => {
     setSelectedRowId(id);
+    setIsModalOpen(true); // 체크박스 클릭 시 바로 모달 창 열기
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedRowId(null);
   };
 
   const [selectedRowId, setSelectedRowId] = useState(null); // 선택된 행의 ID
@@ -183,10 +191,6 @@ const InventoryComponent = () => {
         </tbody>
       </table>
 
-      <button onClick={() => setSelectedRowId(selectedRowId)} disabled={selectedRowId === null}>
-        수정
-      </button>
-
       {!!selectedRowId && (
         <>
           <div className="overlay"></div>
@@ -219,16 +223,7 @@ const InventoryComponent = () => {
 
         <button
           onClick={() =>
-            changePageAndPushHistory(
-              (prevPage) =>
-                prevPage +
-                (page < pageData.totalPages
-                  ? // 만약 현재 페이지가 마지막 페이지보다 작다면,
-                    // 다음 페이지로 이동하도록 함.
-                    prevPage + 1
-                  : // 그렇지 않으면 현재 페이지 번호 유지.
-                    prevPage),
-            )
+            changePageAndPushHistory((prevPage) => prevPage + (page < pageData.totalPages ? prevPage + 1 : prevPage))
           }
           disabled={page >= pageData.totalPages}>
           Next Page
