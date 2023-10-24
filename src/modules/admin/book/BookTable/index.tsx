@@ -1,28 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, MutableRefObject, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { BookContainer, TableContainer } from "./styles";
+import { BookContainer, ModalContainer, TableContainer } from "./styles";
 import axios from "axios";
-
-interface SimplifiedBook {
-  id: number;
-  createdDate: string;
-  publisher: string;
-  title: string;
-  link: string;
-  author: string;
-  pubDate: string;
-  description: string;
-  isbn: string;
-  isbn13: string;
-  itemId: number;
-  priceSales: number;
-  priceStandard: number;
-  stockStatus: string;
-  cover: string;
-  categoryId: number;
-  categoryName: string;
-  customerReviewRank: number;
-}
+import { SimplifiedBook } from "../Book";
+import BookForm from "../BookForm";
+import Modal from "../BookForm/modal";
 
 const columns = ["id", "createdDate", "publisher", "title", "author"];
 const additionalColumns = [
@@ -40,7 +22,8 @@ const additionalColumns = [
 const BASE_URL = "http://localhost:8082/api/books";
 
 const BookTable = () => {
-  //상태변수 정의
+  // Read
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -57,7 +40,7 @@ const BookTable = () => {
   // 함수 정의
 
   useEffect(() => {
-    const fetchBooks = async () => {
+    const getBooks = async () => {
       try {
         const response = await axios.get("http://localhost:8082/api/books/cache");
         setBooks(response.data);
@@ -65,12 +48,11 @@ const BookTable = () => {
         console.log(error);
       }
     };
-    fetchBooks();
+    getBooks();
   }, []);
 
   const handleViewAll = () => {
     setViewAll(true);
-    // navigate("/book/detail");
   };
 
   const handleViewPart = () => {
@@ -98,35 +80,23 @@ const BookTable = () => {
     navigate(`/book/detail/${id}`);
   };
 
-  // const getCachedBooks = async () => {
-  //   try {
-  //     const response = await axios.get(`${BASE_URL}/cached`);
-  //     return response.data;
-  //   } catch (error) {
-  //     console.error("캐시된 책을 가져오는 중에 오류가 발생했습니다", error);
-  //     throw error;
-  //   }
-  // };
+  const handleAdd = () => {
+    setIsModalOpen(true);
+  };
 
-  // const addBook = async (book) => {
-  //   try {
-  //     const response = await axios.post(`${BASE_URL}/addBook`, book);
-  //     return response.data;
-  //   } catch (error) {
-  //     console.error("책을 추가하는 중에 오류가 발생했습니다", error);
-  //     throw error;
-  //   }
-  // };
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
 
-  // const deleteBook = async (bookId) => {
-  //   try {
-  //     const response = await axios.delete(`${BASE_URL}/${bookId}`);
-  //     return response.data;
-  //   } catch (error) {
-  //     console.error("책을 삭제하는 중에 오류가 발생했습니다", error);
-  //     throw error;
-  //   }
-  // };
+  const deleteBook = async (bookId) => {
+    try {
+      const response = await axios.delete(`${BASE_URL}/${bookId}`);
+      return response.data;
+    } catch (error) {
+      console.error("책을 삭제하는 중에 오류가 발생했습니다", error);
+      throw error;
+    }
+  };
   return (
     <div>
       BookTable 컴포넌트
@@ -135,7 +105,7 @@ const BookTable = () => {
           <div>
             <button onClick={handleViewAll}>전체보기</button>
             <button onClick={handleViewPart}>일부보기</button>
-            {/* <button onClick={handleAdd}>추가하기</button> */}
+            <button onClick={handleAdd}>추가하기</button>
           </div>
 
           <div>
@@ -214,7 +184,13 @@ const BookTable = () => {
           </div>
         </div>
       </BookContainer>
+      <div style={{ marginTop: "20px" }}>
+        <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
+          <BookForm />
+        </Modal>
+      </div>
     </div>
   );
 };
+
 export default BookTable;
