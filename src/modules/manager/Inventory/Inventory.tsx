@@ -84,7 +84,6 @@ const InventoryComponent = () => {
     if (pageFromUrl) {
       setPage(pageFromUrl);
     } else {
-      // 페이지 번호가 없는 경우 기본적으로 1로 설정합니다.
       setPage(1);
     }
   }, [location]);
@@ -96,7 +95,7 @@ const InventoryComponent = () => {
   const changePageAndPushHistory = (newPage) => {
     setPage(newPage);
     navigate(`?page=${newPage}&search=${searchTerm}`);
-    window.scrollTo(0, 0); // 페이지 이동 후 스크롤을 최상단으로 이동
+    window.scrollTo(0, 0);
   };
 
   const executeSearch = () => {
@@ -112,8 +111,8 @@ const InventoryComponent = () => {
     }
   };
 
-  const [isModalOpen, setIsModalOpen] = useState(false); // 모달 창이 열렸는지 여부
-  const [selectedRowId, setSelectedRowId] = useState(null); // 선택된 행의 ID
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedRowId, setSelectedRowId] = useState(null);
 
   const handleCheckboxChange = (id) => {
     setSelectedRowId(id);
@@ -133,7 +132,7 @@ const InventoryComponent = () => {
     try {
       const response = await inventoryApi.put(`${INVENTORY_DATA_KEY}/${selectedRowId}`, editedItem);
       console.log("Updated Item:", response.data);
-      window.location.reload(); // 페이지를 새로고침하여 데이터를 갱신합니다.
+      window.location.reload();
     } catch (e) {
       console.error("Item update error:", e);
     }
@@ -146,7 +145,7 @@ const InventoryComponent = () => {
       try {
         const response = await inventoryApi.delete(`${INVENTORY_DATA_KEY}/${selectedRowId}`);
         console.log("Deleted Item:", response.data);
-        window.location.reload(); // 페이지를 새로고침하여 데이터를 갱신합니다.
+        window.location.reload();
       } catch (e) {
         console.error("Item delete error:", e);
       }
