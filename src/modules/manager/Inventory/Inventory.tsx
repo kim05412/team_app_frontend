@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { useHistory, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import useSWR from "swr";
 import Modal from "./modal";
@@ -83,6 +83,9 @@ const InventoryComponent = () => {
     const pageFromUrl = Number(queryParams.get("page"));
     if (pageFromUrl) {
       setPage(pageFromUrl);
+    } else {
+      // 페이지 번호가 없는 경우 기본적으로 1로 설정합니다.
+      setPage(1);
     }
   }, [location]);
 
@@ -92,12 +95,14 @@ const InventoryComponent = () => {
 
   const changePageAndPushHistory = (newPage) => {
     setPage(newPage);
-    navigate(`?page=${newPage}`);
+    navigate(`?page=${newPage}&search=${searchTerm}`);
+    window.scrollTo(0, 0); // 페이지 이동 후 스크롤을 최상단으로 이동
   };
 
   const executeSearch = () => {
     setPage(1);
     setSearchTerm(keyword);
+    navigate(`?page=1&search=${keyword}`);
   };
 
   const handleKeyPress = (event) => {
@@ -108,18 +113,45 @@ const InventoryComponent = () => {
   };
 
   const [isModalOpen, setIsModalOpen] = useState(false); // 모달 창이 열렸는지 여부
+  const [selectedRowId, setSelectedRowId] = useState(null); // 선택된 행의 ID
 
   const handleCheckboxChange = (id) => {
     setSelectedRowId(id);
-    setIsModalOpen(true); // 체크박스 클릭 시 바로 모달 창 열기
+  };
+
+  const handleOpenModal = () => {
+    if (selectedRowId) {
+      setIsModalOpen(true);
+    }
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setSelectedRowId(null);
   };
 
-  const [selectedRowId, setSelectedRowId] = useState(null); // 선택된 행의 ID
+  const handleSaveModal = async (editedItem) => {
+    try {
+      const response = await inventoryApi.put(`${INVENTORY_DATA_KEY}/${selectedRowId}`, editedItem);
+      console.log("Updated Item:", response.data);
+      window.location.reload(); // 페이지를 새로고침하여 데이터를 갱신합니다.
+    } catch (e) {
+      console.error("Item update error:", e);
+    }
+    handleCloseModal();
+  };
+
+  const handleDelete = async () => {
+    const confirmed = window.confirm("삭제하시겠습니까?");
+    if (confirmed) {
+      try {
+        const response = await inventoryApi.delete(`${INVENTORY_DATA_KEY}/${selectedRowId}`);
+        console.log("Deleted Item:", response.data);
+        window.location.reload(); // 페이지를 새로고침하여 데이터를 갱신합니다.
+      } catch (e) {
+        console.error("Item delete error:", e);
+      }
+    }
+  };
 
   return (
     <div>
@@ -135,7 +167,7 @@ const InventoryComponent = () => {
       <table>
         <thead>
           <tr>
-            <th>.</th>
+            <th>수정</th>
             <th>ID</th>
             <th>출판사</th>
             <th>제목</th>
@@ -146,7 +178,6 @@ const InventoryComponent = () => {
             <th>ISBN13</th>
             <th>ItemId</th>
             <th>CategoryId</th>
-            <th>카테고리</th>
             <th>할인가</th>
             <th>정가</th>
             <th>재고량</th>
@@ -179,7 +210,6 @@ const InventoryComponent = () => {
                 <td>{item.isbn13}</td>
                 <td>{item.itemId}</td>
                 <td>{item.categoryId}</td>
-                <td>{item.categoryName}</td>
                 <td>{item.priceSales}</td>
                 <td>{item.priceStandard}</td>
                 <td>{item.stockStatus}</td>
@@ -191,14 +221,22 @@ const InventoryComponent = () => {
         </tbody>
       </table>
 
-      {!!selectedRowId && (
+      <button onClick={handleOpenModal} disabled={!selectedRowId}>
+        수정
+      </button>
+
+      <button onClick={handleDelete} disabled={!selectedRowId}>
+        삭제
+      </button>
+
+      {isModalOpen && (
         <>
           <div className="overlay"></div>
 
           <Modal
             rowData={pageData.content.find((item) => item.id === selectedRowId)}
-            onClose={() => setSelectedRowId(null)}
-            onSave={(editedItem) => console.log("Save edited Item:", editedItem)}
+            onClose={handleCloseModal}
+            onSave={handleSaveModal}
           />
         </>
       )}
@@ -208,11 +246,10 @@ const InventoryComponent = () => {
           First Page
         </button>
 
-        <button onClick={() => changePageAndPushHistory((prevPage) => Math.max(prevPage - 1), 0)} disabled={page === 1}>
+        <button onClick={() => changePageAndPushHistory(page - 1)} disabled={page === 1}>
           Previous Page
         </button>
 
-        {/* 페이지 번호를 표시하는 부분 */}
         {Array.from({ length: Math.min(pageData.totalPages, 5) }, (_, i) =>
           page <= 3 ? i + 1 : page >= pageData.totalPages - 2 ? pageData.totalPages - 4 + i : page - 2 + i,
         ).map((pageNum) => (
@@ -221,11 +258,7 @@ const InventoryComponent = () => {
           </button>
         ))}
 
-        <button
-          onClick={() =>
-            changePageAndPushHistory((prevPage) => prevPage + (page < pageData.totalPages ? prevPage + 1 : prevPage))
-          }
-          disabled={page >= pageData.totalPages}>
+        <button onClick={() => changePageAndPushHistory(page + 1)} disabled={page >= pageData.totalPages}>
           Next Page
         </button>
 
