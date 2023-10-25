@@ -7,11 +7,11 @@ interface ModalProps {
 }
 
 const StyledButton = styled.button`
-  padding: 10px;
+  padding: 15px;
   font-size: 18px;
   border: none;
   border-radius: 4px;
-  background-color: lightgreen;
+  background-color: #45a044;
   color: white;
   cursor: pointer;
 
@@ -23,9 +23,9 @@ const ButtonContainer = styled.div`
   display: flex;
   gap: 10px;
   position: fixed;
-  bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%); // 좌우 중앙에 배치하기 위해 사용
+  top: 0; // 상단에 고정
+  right: 0; // 오른쪽에 고정
+  padding: 10px;
 `;
 
 const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
@@ -34,11 +34,11 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
   return (
     <div
       style={{
+        display: "flex",
         position: "fixed",
-        padding: "100px",
         top: 0,
         left: 0,
-        display: "flex",
+        padding: "100px",
         flexDirection: "column",
         width: "100vw",
         height: "100vh",
@@ -50,13 +50,19 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
       <div
         style={{
           backgroundColor: "#fff",
-          padding: "100px",
+          paddingTop: "70px",
+          paddingBottom: "20px",
+          paddingLeft: "100px",
+          paddingRight: "100px",
           borderRadius: "8px",
+          height: "900px", // 흰색 바탕의 높이를 900px로 설정
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center", // 중앙 정렬
         }}>
         <ButtonContainer>
-          <StyledButton onClick={onClose}>Close</StyledButton>
-          {/* <StyledButton onClick={temporary}>임시저장</StyledButton> */}
-          {/* <StyledButton onClick={onSave}>저장</StyledButton> */}
+          <StyledButton onClick={onClose}>X</StyledButton>
         </ButtonContainer>
         {children}
       </div>

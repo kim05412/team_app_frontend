@@ -31,16 +31,19 @@ const BookForm: React.FC = () => {
   const categoryNameRef = useRef() as MutableRefObject<HTMLInputElement>;
   const customerReviewRankRef = useRef() as MutableRefObject<HTMLInputElement>;
 
-  // 제외한 나머지 필드만 파라미터로 받음
-  const createBookData = async (book: Omit<SimplifiedBook, "id" | "createdDate">) => {
+  const createBookData = async (book) => {
     try {
       const response = await axios.post("http://localhost:8082/api/books/add", book);
       alert("저장되었습니다.");
       console.log(response.data);
       return response.data;
     } catch (error) {
-      console.error(error);
-      alert("저장에 실패하였습니다.");
+      if (error.response && error.response.status === 409) {
+        alert("이미 존재하는 도서 정보입니다.");
+      } else {
+        console.error("저장에 실패하였습니다", error);
+        alert("저장에 실패하였습니다.");
+      }
     }
   };
 
@@ -64,6 +67,23 @@ const BookForm: React.FC = () => {
       customerReviewRank: parseInt(customerReviewRankRef.current.value),
     };
 
+    // 빈 값 체크
+    // 도서 정보 특성 반영
+    const { isbn, isbn13, ...otherFields } = newBook;
+    if (
+      Object.values(otherFields).some(
+        (value) => value === "" || value === null || value === undefined || Number.isNaN(value),
+      )
+    ) {
+      alert("빈 값을 채워주세요.");
+      return;
+    }
+
+    if (!isbn && !isbn13) {
+      alert("ISBN 또는 ISBN13 중 하나는 반드시 입력해야 합니다.");
+      return;
+    }
+
     // 입력한 데이터 서버로 보내고 응답 받은 데이터 저장
     const savedBook = await createBookData(newBook);
     // 상태함수 : 기존배열-> 새 배열 => 상태변화
@@ -78,22 +98,70 @@ const BookForm: React.FC = () => {
     <div>
       <FormContainer>
         <p> 도서 정보 추가하기 </p>
-        <input ref={publisherRef} placeholder="출판사" />
-        <input ref={titleRef} placeholder="제목" />
-        <input ref={linkRef} placeholder="링크" />
-        <input ref={authorRef} placeholder="저자" />
-        <input ref={pubDateRef} placeholder="출판일" />
-        <textarea ref={descriptionRef} placeholder="설명" />
-        <input ref={isbnRef} placeholder="ISBN" />
-        <input ref={isbn13Ref} placeholder="ISBN13" />
-        <input ref={itemIdRef} placeholder="상품 ID" />
-        <input ref={priceSalesRef} placeholder="판매가" />
-        <input ref={priceStandardRef} placeholder="정가" />
-        <input ref={stockStatusRef} placeholder="재고 상태" />
-        <input ref={coverRef} placeholder="커버 이미지 URL" />
-        <input ref={categoryIdRef} placeholder="카테고리 ID" />
-        <input ref={categoryNameRef} placeholder="카테고리 이름" />
-        <input ref={customerReviewRankRef} placeholder="고객 리뷰 평점" />
+        <label>
+          <span>출판사 :</span>
+          <input ref={publisherRef} placeholder="출판사를 입력해주세요" />
+        </label>
+        <label>
+          <span>제목 :</span>
+          <input ref={titleRef} placeholder="도서의 제목을 입력해주세요" />
+        </label>
+        <label>
+          <span>링크 :</span>
+          <input ref={linkRef} placeholder="도서의 링크를 입력해주세요" />
+        </label>
+        <label>
+          <span>저자 :</span>
+          <input ref={authorRef} placeholder="저자의 이름을 입력해주세요" />
+        </label>
+        <label>
+          <span>출판일 :</span>
+          <input ref={pubDateRef} placeholder="출판일을 입력해주세요 (예: 2022-01-01)" />
+        </label>
+        <label>
+          <span>설명 :</span>
+          <textarea ref={descriptionRef} placeholder="도서에 대한 설명을 입력해주세요" />
+        </label>
+        <label>
+          <span>ISBN :</span>
+          <input ref={isbnRef} placeholder="ISBN을 입력해주세요" />
+        </label>
+        <label>
+          <span>ISBN13 :</span>
+          <input ref={isbn13Ref} placeholder="ISBN13을 입력해주세요" />
+        </label>
+        <label>
+          <span>상품 ID :</span>
+          <input ref={itemIdRef} placeholder="상품 ID를 입력해주세요" />
+        </label>
+        <label>
+          <span>판매가 :</span>
+          <input ref={priceSalesRef} placeholder="판매가를 입력해주세요" />
+        </label>
+        <label>
+          <span>정가 :</span>
+          <input ref={priceStandardRef} placeholder="정가를 입력해주세요" />
+        </label>
+        <label>
+          <span>재고 상태 :</span>
+          <input ref={stockStatusRef} placeholder="재고 상태를 입력해주세요" />
+        </label>
+        <label>
+          <span>커버 URL :</span>
+          <input ref={coverRef} placeholder="커버 이미지의 URL을 입력해주세요" />
+        </label>
+        <label>
+          <span>카테고리 ID :</span>
+          <input ref={categoryIdRef} placeholder="카테고리 ID를 입력해주세요" />
+        </label>
+        <label>
+          <span>카테고리 :</span>
+          <input ref={categoryNameRef} placeholder="카테고리 이름을 입력해주세요" />
+        </label>
+        <label>
+          <span>고객 평점:</span>
+          <input ref={customerReviewRankRef} placeholder="고객 리뷰 평점을 입력해주세요" />
+        </label>
         <div>
           <button onClick={handleSave}>저장</button>
           <button>임시저장</button>
