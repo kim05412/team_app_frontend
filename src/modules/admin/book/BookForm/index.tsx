@@ -1,19 +1,17 @@
-import { useState } from "react";
 import axios from "axios";
-import { MutableRefObject, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, MutableRefObject, useRef } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { SimplifiedBook } from "../Book";
 import { FormContainer } from "./styles";
 
 // programatic방식으로 라우팅 처리
 
-const BookForm: React.FC = () => {
+const BookForm = ({ onSave }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState<React.ReactNode | null>(null);
-
   const navigate = useNavigate();
   const [bookData, setBooksData] = useState<SimplifiedBook[]>([]);
-
+  const [hasTempData, setHasTempData] = useState(false);
   const publisherRef = useRef() as MutableRefObject<HTMLInputElement>;
   const titleRef = useRef() as MutableRefObject<HTMLInputElement>;
   const linkRef = useRef() as MutableRefObject<HTMLInputElement>;
@@ -34,7 +32,6 @@ const BookForm: React.FC = () => {
   const createBookData = async (book) => {
     try {
       const response = await axios.post("http://localhost:8082/api/books/add", book);
-      alert("저장되었습니다.");
       console.log(response.data);
       return response.data;
     } catch (error) {
@@ -75,7 +72,7 @@ const BookForm: React.FC = () => {
         (value) => value === "" || value === null || value === undefined || Number.isNaN(value),
       )
     ) {
-      alert("빈 값을 채워주세요.");
+      alert("알맞은 값을 채워주세요.");
       return;
     }
 
@@ -89,8 +86,74 @@ const BookForm: React.FC = () => {
     // 상태함수 : 기존배열-> 새 배열 => 상태변화
     if (savedBook) {
       // 현재 책 리스트의 모든 책들을 개별 요소로 펼친것에 새 책 추가
-      setBooksData((prevBooks) => [...prevBooks, savedBook]);
-      navigate("/books");
+      alert("저장되었습니다.");
+      onSave(savedBook);
+      // navigate("/books");
+    }
+  };
+
+  useEffect(() => {
+    const tempBook = localStorage.getItem("tempBook");
+    if (tempBook) {
+      setHasTempData(true);
+    }
+  }, []);
+
+  const handleTempSave = () => {
+    const newBook = {
+      publisher: publisherRef.current.value,
+      title: titleRef.current.value,
+      link: linkRef.current.value,
+      author: authorRef.current.value,
+      pubDate: pubDateRef.current.value,
+      description: descriptionRef.current.value,
+      isbn: isbnRef.current.value,
+      isbn13: isbn13Ref.current.value,
+      itemId: itemIdRef.current.value ? parseInt(itemIdRef.current.value) : null,
+      priceSales: priceSalesRef.current.value ? parseInt(priceSalesRef.current.value) : null,
+      priceStandard: priceStandardRef.current.value ? parseInt(priceStandardRef.current.value) : null,
+      stockStatus: stockStatusRef.current.value,
+      cover: coverRef.current.value,
+      categoryId: categoryIdRef.current.value ? parseInt(categoryIdRef.current.value) : null,
+      categoryName: categoryNameRef.current.value,
+      customerReviewRank: customerReviewRankRef.current.value ? parseInt(customerReviewRankRef.current.value) : null,
+    };
+
+    // 값이 있는지 확인
+    if (Object.values(newBook).some((value) => value !== null && value !== "" && !Number.isNaN(value))) {
+      localStorage.setItem("tempBook", JSON.stringify(newBook));
+      alert("임시저장 되었습니다.");
+    } else {
+      alert("저장할 데이터가 없습니다.");
+    }
+  };
+
+  const handleLoadTempData = () => {
+    const tempBook = localStorage.getItem("tempBook");
+    if (tempBook) {
+      const loadedBook = JSON.parse(tempBook);
+      publisherRef.current.value = loadedBook.publisher || "";
+      titleRef.current.value = loadedBook.title || "";
+      linkRef.current.value = loadedBook.link || "";
+      authorRef.current.value = loadedBook.author || "";
+      pubDateRef.current.value = loadedBook.pubDate || "";
+      descriptionRef.current.value = loadedBook.description || "";
+      isbnRef.current.value = loadedBook.isbn || "";
+      isbn13Ref.current.value = loadedBook.isbn13 || "";
+      itemIdRef.current.value = loadedBook.itemId !== null ? loadedBook.itemId.toString() : "";
+      priceSalesRef.current.value = loadedBook.priceSales !== null ? loadedBook.priceSales.toString() : "";
+      priceStandardRef.current.value = loadedBook.priceStandard !== null ? loadedBook.priceStandard.toString() : "";
+      stockStatusRef.current.value = loadedBook.stockStatus || "";
+      coverRef.current.value = loadedBook.cover || "";
+      categoryIdRef.current.value = loadedBook.categoryId !== null ? loadedBook.categoryId.toString() : "";
+      categoryNameRef.current.value = loadedBook.categoryName || "";
+      customerReviewRankRef.current.value =
+        loadedBook.customerReviewRank !== null ? loadedBook.customerReviewRank.toString() : "";
+
+      alert("데이터가 불러와졌습니다.");
+      setHasTempData(false);
+    } else {
+      alert("임시저장된 데이터가 없습니다.");
     }
   };
 
@@ -163,12 +226,15 @@ const BookForm: React.FC = () => {
           <input ref={customerReviewRankRef} placeholder="고객 리뷰 평점을 입력해주세요" />
         </label>
         <div>
-          <button onClick={handleSave}>저장</button>
-          <button>임시저장</button>
+          <button onClick={handleSave}>추가하기</button>
+          {hasTempData ? (
+            <button onClick={handleLoadTempData}>임시데이터 불러오기</button>
+          ) : (
+            <button onClick={handleTempSave}>임시저장</button>
+          )}
         </div>
       </FormContainer>
     </div>
   );
 };
-
 export default BookForm;

@@ -1,7 +1,6 @@
-import BookForm from "../book/BookForm";
-import BookTable from "../book/BookTable";
-
 // import { addBook, deleteBook, getCachedBooks } from "../book/BookTable";
+
+import BookTable from "../book/BookTable";
 
 const BookManagement = () => {
   return (

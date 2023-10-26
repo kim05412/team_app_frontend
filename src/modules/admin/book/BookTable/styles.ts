@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import Modal from "../BookForm/modal";
+import Modal from "../BookAdd/modal";
 
 // jsx스타일-css
 export const BookContainer = styled.div`
@@ -62,18 +62,19 @@ export const TableContainer = styled.div`
     border-collapse: collapse;
     width: 100%;
     margin: 20px 0;
+    overflow-x: auto;
   }
 
   th {
     background-color: #f2f2f2;
     border: 1px solid #ddd;
-    padding: 12px;
+    padding: 5px;
     text-align: left;
   }
 
   td {
     border: 1px solid #ddd;
-    padding: 12px;
+    padding: 5px;
   }
 
   tr {
