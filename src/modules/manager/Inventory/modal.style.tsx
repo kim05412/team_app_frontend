@@ -27,6 +27,8 @@ export const ModalWrapper = styled.div`
 
   overflow-y: auto;
 
+  z-index: 3;
+
   /* Add more styles as you want */
 `;
 

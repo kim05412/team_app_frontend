@@ -4,6 +4,20 @@ import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import useSWR from "swr";
 import Modal from "./modal";
+import {
+  EditDeleteButton,
+  Footer,
+  InventoryImage,
+  InventoryPage,
+  InventoryTable,
+  InventoryTableBody,
+  InventoryTableHeader,
+  Overlay,
+  SearchButton,
+  SearchInput,
+  TableData,
+  TableHeader,
+} from "./inventory.style";
 
 const inventoryApi = axios.create({
   baseURL: "http://localhost:8080",
@@ -152,85 +166,101 @@ const InventoryComponent = () => {
     }
   };
 
+  const sendDataToRedis = async () => {
+    for (const item of pageData.content) {
+      const { itemId, stockStatus } = item;
+
+      try {
+        const response = await inventoryApi.post("/api/send-to-redis", { itemId, stockStatus });
+        console.log(`Data sent to Redis: ${response.data}`);
+      } catch (error) {
+        console.error(`Error sending data to Redis for item ${itemId}: ${error}`);
+      }
+    }
+
+    alert("저장되었습니다!");
+  };
+
   return (
-    <div>
+    <InventoryPage>
       <h1>Inventory Page</h1>
-      <input
+      <SearchInput
         type="text"
         value={keyword}
         onChange={(e) => setKeyword(e.target.value)}
         onKeyPress={handleKeyPress}
-        placeholder="Search..."
+        placeholder="제목검색"
       />
-      <button onClick={executeSearch}>검색</button>
-      <table>
-        <thead>
+      <SearchButton onClick={executeSearch}>검색</SearchButton>
+      <InventoryTable>
+        <InventoryTableHeader>
           <tr>
-            <th>수정</th>
-            <th>ID</th>
-            <th>출판사</th>
-            <th>제목</th>
-            <th>링크</th>
-            <th>글쓴이</th>
-            <th>출판일</th>
-            <th>ISBN</th>
-            <th>ISBN13</th>
-            <th>ItemId</th>
-            <th>CategoryId</th>
-            <th>할인가</th>
-            <th>정가</th>
-            <th>재고량</th>
-            <th>표지</th>
+            <TableHeader>선택</TableHeader>
+            <TableHeader>ID</TableHeader>
+            <TableHeader>출판사</TableHeader>
+            <TableHeader>제목</TableHeader>
+            <TableHeader>링크</TableHeader>
+            <TableHeader>글쓴이</TableHeader>
+            <TableHeader>출판일</TableHeader>
+            <TableHeader>ISBN</TableHeader>
+            <TableHeader>ISBN13</TableHeader>
+            <TableHeader>ItemId</TableHeader>
+            <TableHeader>CategoryId</TableHeader>
+            <TableHeader>할인가</TableHeader>
+            <TableHeader>정가</TableHeader>
+            <TableHeader>재고량</TableHeader>
+            <TableHeader>표지</TableHeader>
           </tr>
-        </thead>
+        </InventoryTableHeader>
 
-        <tbody>
+        <InventoryTableBody>
           {pageData &&
             pageData.content.map((item, index) => (
               <tr key={item.id}>
-                <td>
+                <TableData>
                   <input
                     type="checkbox"
                     checked={item.id === selectedRowId}
                     onChange={() => handleCheckboxChange(item.id)}
                   />
-                </td>
-                <td>{item.id}</td>
-                <td>{item.publisher}</td>
-                <td>{item.title}</td>
-                <td>
+                </TableData>
+                <TableData>{item.id}</TableData>
+                <TableData>{item.publisher}</TableData>
+                <TableData>{item.title}</TableData>
+                <TableData>
                   <a href={item.link} target="_blank" rel="noopener noreferrer">
-                    [링크]
+                    링크
                   </a>
-                </td>
-                <td>{item.author}</td>
-                <td>{item.pubDate}</td>
-                <td>{item.isbn}</td>
-                <td>{item.isbn13}</td>
-                <td>{item.itemId}</td>
-                <td>{item.categoryId}</td>
-                <td>{item.priceSales}</td>
-                <td>{item.priceStandard}</td>
-                <td>{item.stockStatus}</td>
-                <td>
-                  <img src={item.cover} alt="cover" />
-                </td>
+                </TableData>
+                <TableData>{item.author}</TableData>
+                <TableData>{item.pubDate}</TableData>
+                <TableData>{item.isbn}</TableData>
+                <TableData>{item.isbn13}</TableData>
+                <TableData>{item.itemId}</TableData>
+                <TableData>{item.categoryId}</TableData>
+                <TableData>{item.priceSales}</TableData>
+                <TableData>{item.priceStandard}</TableData>
+                <TableData>{item.stockStatus}</TableData>
+                <TableData>
+                  <InventoryImage src={item.cover} alt="cover" />
+                </TableData>
               </tr>
             ))}
-        </tbody>
-      </table>
+        </InventoryTableBody>
+      </InventoryTable>
 
-      <button onClick={handleOpenModal} disabled={!selectedRowId}>
+      <EditDeleteButton onClick={handleOpenModal} disabled={!selectedRowId}>
         수정
-      </button>
+      </EditDeleteButton>
 
-      <button onClick={handleDelete} disabled={!selectedRowId}>
+      <EditDeleteButton onClick={handleDelete} disabled={!selectedRowId}>
         삭제
-      </button>
+      </EditDeleteButton>
+      <EditDeleteButton onClick={sendDataToRedis}>전송</EditDeleteButton>
 
       {isModalOpen && (
         <>
-          <div className="overlay"></div>
+          <Overlay></Overlay>
 
           <Modal
             rowData={pageData.content.find((item) => item.id === selectedRowId)}
@@ -240,7 +270,7 @@ const InventoryComponent = () => {
         </>
       )}
 
-      <footer>
+      <Footer>
         <button onClick={() => changePageAndPushHistory(1)} disabled={page === 1}>
           First Page
         </button>
@@ -264,8 +294,8 @@ const InventoryComponent = () => {
         <button onClick={() => changePageAndPushHistory(pageData.totalPages)} disabled={page === pageData.totalPages}>
           Last Page
         </button>
-      </footer>
-    </div>
+      </Footer>
+    </InventoryPage>
   );
 };
 
