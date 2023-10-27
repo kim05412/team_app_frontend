@@ -11,7 +11,8 @@ const BookForm = ({ onSave, onClose }) => {
   const [modalContent, setModalContent] = useState<React.ReactNode | null>(null);
   const navigate = useNavigate();
   const [bookData, setBooksData] = useState<SimplifiedBook[]>([]);
-  const [hasTempData, setHasTempData] = useState(false);
+  const [hasTempBook, setHasTempBook] = useState(false);
+  const [showTempSaved, setShowTempSaved] = useState(false);
   const publisherRef = useRef() as MutableRefObject<HTMLInputElement>;
   const titleRef = useRef() as MutableRefObject<HTMLInputElement>;
   const linkRef = useRef() as MutableRefObject<HTMLInputElement>;
@@ -29,10 +30,13 @@ const BookForm = ({ onSave, onClose }) => {
   const categoryNameRef = useRef() as MutableRefObject<HTMLInputElement>;
   const customerReviewRankRef = useRef() as MutableRefObject<HTMLInputElement>;
 
-  const createBookData = async (book) => {
+  const createBookData = async (book, isTempBook) => {
     try {
       const response = await axios.post("http://localhost:8082/api/books/add", book);
       console.log(response.data);
+      if (isTempBook) {
+        clearTempBook();
+      }
       return response.data;
     } catch (error) {
       if (error.response && error.response.status === 409) {
@@ -82,7 +86,8 @@ const BookForm = ({ onSave, onClose }) => {
     }
 
     // 입력한 데이터 서버로 보내고 응답 받은 데이터 저장
-    const savedBook = await createBookData(newBook);
+    const savedBook = hasTempBook ? await createBookData(newBook, true) : await createBookData(newBook, false);
+
     // 상태함수 : 기존배열-> 새 배열 => 상태변화
     if (savedBook) {
       // 현재 책 리스트의 모든 책들을 개별 요소로 펼친것에 새 책 추가
@@ -93,10 +98,26 @@ const BookForm = ({ onSave, onClose }) => {
   };
 
   useEffect(() => {
-    const tempBook = localStorage.getItem("tempBook");
-    if (tempBook) {
-      setHasTempData(true);
-    }
+    const handleStorageChange = () => {
+      const tempBook = localStorage.getItem("tempBook");
+      if (tempBook !== null) {
+        setHasTempBook(true);
+        setShowTempSaved(true);
+      }
+    };
+
+    // 초기값 설정
+    handleStorageChange();
+
+    // storage 이벤트 리스너 등록
+    // localStorage 또는 sessionStorage 변경-> storage 이벤트를 발생
+    // 브라우저에따라, 탭간의 데이터 업데이트 위해
+    window.addEventListener("storage", handleStorageChange);
+
+    // 컴포넌트 언마운트 시 리스너 제거
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
   }, []);
 
   const handleTempSave = () => {
@@ -127,8 +148,13 @@ const BookForm = ({ onSave, onClose }) => {
       alert("저장할 데이터가 없습니다.");
     }
   };
+  // 임시저장 데이터 지우기
+  const clearTempBook = () => {
+    localStorage.removeItem("tempBook");
+    setShowTempSaved(true);
+  };
 
-  const handleLoadTempData = () => {
+  const handleLoadTempBook = () => {
     const tempBook = localStorage.getItem("tempBook");
     if (tempBook) {
       const loadedBook = JSON.parse(tempBook);
@@ -151,7 +177,8 @@ const BookForm = ({ onSave, onClose }) => {
         loadedBook.customerReviewRank !== null ? loadedBook.customerReviewRank.toString() : "";
 
       alert("데이터가 불러와졌습니다.");
-      setHasTempData(false);
+      setHasTempBook(true);
+      setShowTempSaved(false);
     } else {
       alert("임시저장된 데이터가 없습니다.");
     }
@@ -227,8 +254,8 @@ const BookForm = ({ onSave, onClose }) => {
         </label>
         <div>
           <button onClick={handleSave}>추가하기</button>
-          {hasTempData ? (
-            <button onClick={handleLoadTempData}>임시데이터 불러오기</button>
+          {showTempSaved ? (
+            <button onClick={handleLoadTempBook}>임시데이터 불러오기</button>
           ) : (
             <button onClick={handleTempSave}>임시저장</button>
           )}
