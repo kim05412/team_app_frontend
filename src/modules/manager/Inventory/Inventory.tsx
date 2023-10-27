@@ -20,7 +20,7 @@ import {
 } from "./inventory.style";
 
 const inventoryApi = axios.create({
-  baseURL: "http://localhost:8080",
+  baseURL: "http://localhost:8082",
 });
 
 interface InventoryData {

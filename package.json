@@ -1,6 +1,5 @@
 {
   "proxy": "http://localhost:8080",
-
   "scripts": {
     "start": "webpack serve --mode development --port 5000",
     "build": "webpack --mode production",
@@ -33,6 +32,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.16.0",
+    "semantic-ui-react": "^2.1.4",
     "styled-components": "^6.1.0",
     "swr": "^2.2.2"
   }
