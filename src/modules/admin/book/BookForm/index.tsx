@@ -6,7 +6,7 @@ import { FormContainer } from "./styles";
 
 // programatic방식으로 라우팅 처리
 
-const BookForm = ({ onSave }) => {
+const BookForm = ({ onSave, onClose }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState<React.ReactNode | null>(null);
   const navigate = useNavigate();
@@ -88,7 +88,7 @@ const BookForm = ({ onSave }) => {
       // 현재 책 리스트의 모든 책들을 개별 요소로 펼친것에 새 책 추가
       alert("저장되었습니다.");
       onSave(savedBook);
-      // navigate("/books");
+      onClose();
     }
   };
 

@@ -210,7 +210,7 @@ const BookTable = () => {
         <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
           {/* onAddBook이라는 prop으로 handleAddBook 함수를 전달 */}
           {/* BookForm 컴포넌트 내부에서 onAddBook-> handleAddBook() */}
-          <BookForm onSave={handleSaved} />
+          <BookForm onSave={handleSaved} onClose={handleCloseModal} />
         </Modal>
       </div>
     </div>
