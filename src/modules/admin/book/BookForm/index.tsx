@@ -111,7 +111,7 @@ const BookForm = ({ onSave, onClose }) => {
 
     // storage 이벤트 리스너 등록
     // localStorage 또는 sessionStorage 변경-> storage 이벤트를 발생
-    // 브라우저에따라, 탭간의 데이터 업데이트 위해
+    // 브라우저에따라, 탭간의 데이터 동기화
     window.addEventListener("storage", handleStorageChange);
 
     // 컴포넌트 언마운트 시 리스너 제거
