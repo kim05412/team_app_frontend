@@ -65,8 +65,11 @@ const BookTable = () => {
     ? filteredBooks.slice(indexOfFirstItem, indexOfLastItem)
     : books.slice(indexOfFirstItem, indexOfLastItem);
 
-  // 함수 정의
+  //선택
+  const [isEditing, setIsEditing] = useState(false);
+  const [selectedBooks, setSelectedBooks] = useState<number[]>([]);
 
+  // 함수 정의
   useEffect(() => {
     const getBooks = async () => {
       try {
@@ -90,23 +93,6 @@ const BookTable = () => {
       console.log("데이터 성공적으로 추가됨.");
       setUpdateData((prev) => !prev);
       console.log("2.서버로 렌더링 요청 보냄");
-    }
-  };
-  const handleDelete = async (itemId) => {
-    const response = await deleteBook(itemId);
-    if (response.data) {
-      // 요청이 성공적으로 처리되었다면
-      setUpdateData((prev) => !prev);
-    }
-  };
-
-  const deleteBook = async (itemId) => {
-    try {
-      const response = await axios.delete(`${BASE_URL}/${itemId}`);
-      return response.data;
-    } catch (error) {
-      console.error("책을 삭제하는 중에 오류가 발생했습니다", error);
-      throw error;
     }
   };
 
@@ -139,33 +125,73 @@ const BookTable = () => {
     setSearchTerm(event.target.value);
   };
 
-  // // 1번
-  // const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-  //   if (event.key === "Enter") {
-  //     const searchResults = setSearchTerm(event.target.value);
-  //     handleSearch(searchResults);
-  //   }
+  // const handleClickItem = (id: number) => {
+  //   navigate(`/book/detail/${id}`);
   // };
-
-  // const handleSearch = () => {
-  //   const results = books.filter((book) =>
-  //     Object.keys(book).some(
-  //       (key) =>
-  //         book[key] !== null &&
-  //         book[key] !== undefined &&
-  //         book[key].toString().toLowerCase().includes(searchTerm.toLowerCase()),
-  //     ),
-  //   );
-  //   setFilteredBooks(results);
-  // };
-
-  const handleClickItem = (id: number) => {
-    navigate(`/book/detail/${id}`);
-  };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
   };
+
+  const handleKeyPresSearch = (event) => {
+    if (event.key === "Enter") {
+      // Enter 키를 눌렀을 때 handleSearch 함수를 호출합니다.
+      handleSearchBtn();
+    }
+  };
+  //선택
+  const handleEditClick = () => {
+    setIsEditing(!isEditing);
+  };
+
+  const handleSelectBook = (bookId) => {
+    if (selectedBooks.includes(bookId)) {
+      setSelectedBooks(selectedBooks.filter((id) => id !== bookId));
+    } else {
+      setSelectedBooks([...selectedBooks, bookId]);
+    }
+  };
+  //삭제
+
+  const deleteBook = async (bookId) => {
+    try {
+      const response = await axios.delete(`${BASE_URL}/delete/${bookId}`);
+      return response.data;
+    } catch (error) {
+      console.error("책을 삭제하는 중에 오류가 발생했습니다", error);
+      throw error;
+    }
+  };
+  const handleDelete = async () => {
+    if (isEditing && selectedBooks.length > 0) {
+      const confirmDelete = window.confirm(`총 ${selectedBooks.length}개의 데이터를 삭제하시겠습니까?`);
+      if (confirmDelete) {
+        try {
+          const responses = await Promise.all(selectedBooks.map((bookId) => deleteBook(bookId)));
+          if (responses.every((response) => response)) {
+            setUpdateData((prev) => !prev);
+            setSelectedBooks([]);
+          }
+        } catch (error) {
+          console.error("삭제 처리 중 오류가 발생했습니다", error);
+        }
+      }
+    }
+  };
+
+  const handleKeyDown = async (event) => {
+    if (event.key === "Enter") {
+      await handleDelete();
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isEditing, selectedBooks]);
 
   return (
     <div>
@@ -177,7 +203,7 @@ const BookTable = () => {
             <option value="author">저자</option>
             <option value="publisher">출판사</option>
           </Select>
-          <Input value={searchTerm} onChange={handleChange} placeholder="검색..." />
+          <Input value={searchTerm} onChange={handleChange} onKeyPress={handleKeyPresSearch} placeholder="검색..." />
           <Button onClick={handleSearchBtn}>검색</Button>
         </SearchContainer>
         <PageContainer>
@@ -186,7 +212,14 @@ const BookTable = () => {
               <Button onClick={handleViewAll}>전체보기</Button>
               <Button onClick={handleViewPart}>일부보기</Button>
               <Button onClick={handleAdd}>추가하기</Button>
-              <Button onClick={handleDelete}>삭제하기</Button>
+              <div>
+                {isEditing && (
+                  <Button onClick={handleDelete} onKeyPress={handleKeyDown}>
+                    삭제하기
+                  </Button>
+                )}
+                <Button onClick={handleEditClick}>{isEditing ? "편집취소" : "편집하기"}</Button>
+              </div>
             </ButtonGroup>
           </ButtonContainer>
         </PageContainer>
@@ -198,6 +231,7 @@ const BookTable = () => {
           <table style={{ overflowX: "auto" }}>
             <thead>
               <tr>
+                {isEditing && <th>선택</th>}
                 {columns.map((column) => (
                   <th key={column}>{column}</th>
                 ))}
@@ -207,7 +241,16 @@ const BookTable = () => {
             </thead>
             <tbody>
               {currentBooks.map((book) => (
-                <tr key={book.id} onClick={() => handleClickItem(book.id)}>
+                <tr key={book.id}>
+                  {isEditing && (
+                    <td>
+                      <input
+                        type="checkbox"
+                        checked={selectedBooks.includes(book.id)}
+                        onChange={() => handleSelectBook(book.id)}
+                      />
+                    </td>
+                  )}
                   {(viewAll ? columns.concat(additionalColumns) : columns).map((column) => (
                     <td key={column}>
                       {book[column] !== undefined ? (
