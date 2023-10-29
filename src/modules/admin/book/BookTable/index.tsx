@@ -1,12 +1,21 @@
 import { useState, useEffect, MutableRefObject, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { BookContainer, ModalContainer, TableContainer } from "./styles";
+import {
+  BookContainer,
+  Button,
+  ButtonContainer,
+  ButtonGroup,
+  Input,
+  ModalContainer,
+  PageContainer,
+  SearchContainer,
+  Select,
+  TableContainer,
+} from "./styles";
 import axios from "axios";
 import { BASE_URL, SimplifiedBook } from "../Book";
 import BookForm from "../BookForm";
 import Modal from "../BookForm/modal";
-import BookSearch from "../BookSearch";
-// import deleteBook from "../deleteBook";
 
 const columns = ["id", "createdDate", "publisher", "title", "author"];
 const additionalColumns = [
@@ -25,7 +34,23 @@ const BookTable = () => {
   // Read
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
+  const [searchOption, setSearchOption] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const highlightSearchTerm = (text: string, searchTerm: string) => {
+    if (!searchTerm) return text;
+    // split: string만 가능 // gi:전체,대소문자 구분X
+    // 검색어를 기준으로 나뉨 -> index 부여됨.
+    // 검색어 해당되는 part =1개->0,1,2
+    return text.split(new RegExp(`(${searchTerm})`, "gi")).map((part, index) =>
+      part.toLowerCase() === searchTerm.toLowerCase() ? (
+        <span key={index} style={{ backgroundColor: "yellow" }}>
+          {part}
+        </span>
+      ) : (
+        part
+      ),
+    );
+  };
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 100;
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -85,6 +110,23 @@ const BookTable = () => {
     }
   };
 
+  //검색 옵션 변경
+  const handleSearchOption = (event) => {
+    setSearchOption(event.target.value);
+  };
+  // 검색 dropdown
+  const handleSearchBtn = () => {
+    const results = books.filter((book) =>
+      searchOption === ""
+        ? Object.values(book).some(
+            (value) => value && value.toString().toLowerCase().includes(searchTerm.toLowerCase()),
+          )
+        : book[searchOption] && book[searchOption].toLowerCase().includes(searchTerm.toLowerCase()),
+    );
+    setFilteredBooks(results);
+  };
+
+  // 조회
   const handleViewAll = () => {
     setViewAll(true);
   };
@@ -93,9 +135,9 @@ const BookTable = () => {
     setViewAll(false);
   };
 
-  // const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-  //   setSearchTerm(event.target.value);
-  // };
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
+  };
 
   // // 1번
   // const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -117,11 +159,6 @@ const BookTable = () => {
   //   setFilteredBooks(results);
   // };
 
-  //filteredBooks 상태를 업데이트
-  const handleSearch = (filteredBooks) => {
-    setFilteredBooks(filteredBooks);
-  };
-
   const handleClickItem = (id: number) => {
     navigate(`/book/detail/${id}`);
   };
@@ -133,16 +170,26 @@ const BookTable = () => {
   return (
     <div>
       <BookContainer>
-        <div>
-          <button onClick={handleViewAll}>전체보기</button>
-          <button onClick={handleViewPart}>일부보기</button>
-          <button onClick={handleAdd}>추가하기</button>
-          <button onClick={handleDelete}>삭제하기</button>
-        </div>
-
-        <div>
-          <BookSearch books={books} onSearch={handleSearch} />
-        </div>
+        <SearchContainer>
+          <Select value={searchOption} onChange={handleSearchOption}>
+            <option value="">전체</option>
+            <option value="title">제목</option>
+            <option value="author">저자</option>
+            <option value="publisher">출판사</option>
+          </Select>
+          <Input value={searchTerm} onChange={handleChange} placeholder="검색..." />
+          <Button onClick={handleSearchBtn}>검색</Button>
+        </SearchContainer>
+        <PageContainer>
+          <ButtonContainer>
+            <ButtonGroup>
+              <Button onClick={handleViewAll}>전체보기</Button>
+              <Button onClick={handleViewPart}>일부보기</Button>
+              <Button onClick={handleAdd}>추가하기</Button>
+              <Button onClick={handleDelete}>삭제하기</Button>
+            </ButtonGroup>
+          </ButtonContainer>
+        </PageContainer>
 
         {/* true일때 */}
         {/* {loading && <p>Loading...</p>} */}
@@ -160,25 +207,22 @@ const BookTable = () => {
             </thead>
             <tbody>
               {currentBooks.map((book) => (
-                <tr
-                  key={book.id}
-                  onClick={() => {
-                    handleClickItem(book.id);
-                  }}>
+                <tr key={book.id} onClick={() => handleClickItem(book.id)}>
                   {(viewAll ? columns.concat(additionalColumns) : columns).map((column) => (
                     <td key={column}>
                       {book[column] !== undefined ? (
-                        <div style={{ minWidth: column === "title" || column === "author" ? "250px" : "auto" }}>
-                          {typeof book[column] === "string" && searchTerm
-                            ? book[column].split(new RegExp(`(${searchTerm})`, "gi")).map((part, index) =>
-                                part.toLowerCase() === searchTerm.toLowerCase() ? (
-                                  <span key={index} style={{ backgroundColor: "yellow" }}>
-                                    {part}
-                                  </span>
-                                ) : (
-                                  part
-                                ),
-                              )
+                        <div
+                          style={{
+                            minWidth:
+                              column === "" || column === "title" || column === "author" || column === "publisher"
+                                ? "250px"
+                                : "auto",
+                          }}>
+                          {/* 문자열 */}
+                          {typeof book[column] === "string" &&
+                          searchTerm &&
+                          (searchOption === "" || searchOption === column)
+                            ? highlightSearchTerm(book[column], searchTerm)
                             : book[column]}
                         </div>
                       ) : (
