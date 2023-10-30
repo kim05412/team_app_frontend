@@ -6,7 +6,6 @@ import {
   ButtonContainer,
   ButtonGroup,
   Input,
-  ModalContainer,
   PageContainer,
   SearchContainer,
   Select,
@@ -16,6 +15,8 @@ import axios from "axios";
 import { BASE_URL, SimplifiedBook } from "../Book";
 import BookForm from "../BookForm";
 import Modal from "../BookForm/modal";
+import UpdateModal from "../BookModify";
+import UpModal from "../BookModify/modal";
 
 const columns = ["id", "createdDate", "publisher", "title", "author"];
 const additionalColumns = [
@@ -71,14 +72,17 @@ const BookTable = () => {
   const [selectedBooks, setSelectedBooks] = useState<number[]>([]);
 
   //수정
-  const [editingBook, setEditingBook] = useState(null);
-  const [formData, setFormData] = useState<SimplifiedBook>({} as SimplifiedBook);
+  const handleClose = () => {
+    setIsUpdateModalOpen(false);
+  };
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [currentEditBook, setCurrentEditBook] = useState<SimplifiedBook | null>(null);
 
   // 함수 정의
   useEffect(() => {
     const getBooks = async () => {
       try {
-        const response = await axios.get("http://localhost:8082/api/books/cache");
+        const response = await axios.get(`${BASE_URL}/cache`);
         setBooks(response.data);
         console.log("1.서버에서 렌더링 요청 받음");
       } catch (error) {
@@ -168,7 +172,7 @@ const BookTable = () => {
   const deleteBook = async (selectedBooks) => {
     try {
       console.log(selectedBooks);
-      const response = await axios.delete("http://localhost:8082/api/books", {
+      const response = await axios.delete(`${BASE_URL}`, {
         params: {
           itemIds: selectedBooks.join(","),
         },
@@ -222,36 +226,61 @@ const BookTable = () => {
   }, [isEditing, selectedBooks]);
 
   //수정
+  //버튼-> 모달창 open
+  const handleEditClick = (book: SimplifiedBook) => {
+    setCurrentEditBook(book);
+    setIsUpdateModalOpen(true);
+  };
 
-  const handleUpdateBook = async (itemId, updatedData) => {
+  const handleSaveEdit = (editedBook) => {
+    // 서버에 수정 요청을 보냅니다.
+    updateBookOnServer(editedBook).then((response) => {
+      if (response) {
+        setUpdateData((prev) => !prev);
+        alert("수정이 완료되었습니다.");
+
+        // 여기에 서버에서 가져온 새로운 도서 목록으로 상태를 업데이트하는 코드를 추가합니다.
+      } else {
+        alert("수정에 실패했습니다.");
+      }
+    });
+  };
+
+  // 서버 통신
+  const updateBookOnServer = async (book) => {
     try {
-      const response = await axios.patch(`${BASE_URL}/${itemId}`, updatedData);
-      return response.data;
+      const response = await axios.put(`${BASE_URL}/${book.itemId}`, book, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      return response;
     } catch (error) {
-      console.error("책을 수정하는 중에 오류가 발생했습니다", error);
+      console.error("서버에 도서 정보를 업데이트하는데 실패했습니다.", error);
       throw error;
     }
   };
 
-  const handleEditClick = (book: SimplifiedBook) => {
-    setFormData(book);
-  };
-
-  const handleFormChange = (event) => {
-    const { name, value } = event.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-  const handleSaveClick = async () => {
-    try {
-      const response = await handleUpdateBook(editingBook.itemId, formData);
-      if (response) {
-        setUpdateData((prev) => !prev); // 데이터가 수정되었으므로 updateData 상태를 바꿔줌
-        setEditingBook(null);
-      }
-    } catch (error) {
-      console.error("수정 처리 중 오류가 발생했습니다", error);
-    }
-  };
+  // const handleUpdateBook = async (updatedBook: SimplifiedBook) => {
+  //   try {
+  //     // 서버에 수정 요청 보내기
+  //     const response = await updateBookOnServer(updatedBook);
+  //     if (response) {
+  //       // 성공 시 모달 닫기
+  //       setIsModalOpen(false);
+  //       // 성공 알림
+  //       alert("도서 정보가 성공적으로 수정되었습니다.");
+  //       // 도서 목록 업데이트
+  //       // ...
+  //     } else {
+  //       // 서버에서 실패 응답이 왔을 경우
+  //       alert("도서 정보 수정에 실패했습니다.");
+  //     }
+  //   } catch (error) {
+  //     // 네트워크 오류 등으로 인한 실패
+  //     alert("도서 정보 수정에 실패했습니다.");
+  //   }
+  // };
 
   return (
     <div>
@@ -344,52 +373,6 @@ const BookTable = () => {
             </tbody>
           </table>
         </TableContainer>
-        {editingBook && (
-          <div>
-            <h3>책 정보 수정</h3>
-            <form>
-              <div>
-                <label htmlFor="title">제목: </label>
-                <input type="text" id="title" name="title" value={formData.title} onChange={handleFormChange} />
-              </div>
-              <div>
-                <label htmlFor="author">저자: </label>
-                <input type="text" id="author" name="author" value={formData.author} onChange={handleFormChange} />
-              </div>
-              <div>
-                <label htmlFor="publisher">출판사: </label>
-                <input
-                  type="text"
-                  id="publisher"
-                  name="publisher"
-                  value={formData.publisher}
-                  onChange={handleFormChange}
-                />
-              </div>
-              <div>
-                <label htmlFor="priceSales">판매가: </label>
-                <input
-                  type="number"
-                  id="priceSales"
-                  name="priceSales"
-                  value={formData.priceSales}
-                  onChange={handleFormChange}
-                />
-              </div>
-              <div>
-                <label htmlFor="priceStandard">정가: </label>
-                <input
-                  type="number"
-                  id="priceStandard"
-                  name="priceStandard"
-                  value={formData.priceStandard}
-                  onChange={handleFormChange}
-                />
-              </div>
-              <Button onClick={handleSaveClick}>저장하기</Button>
-            </form>
-          </div>
-        )}
         <div>
           {/* 페이징컨트롤 */}
           <button onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>
@@ -412,6 +395,17 @@ const BookTable = () => {
           <BookForm onSave={handleSaved} onClose={handleCloseModal} />
         </Modal>
       </div>
+
+      {isUpdateModalOpen && (
+        <UpModal isOpen={UpdateModal} onClose={handleCloseModal}>
+          <UpdateModal
+            book={currentEditBook}
+            onSave={handleSaveEdit}
+            onClose={() => setIsUpdateModalOpen(false)}
+            isOpen={isUpdateModalOpen}
+          />
+        </UpModal>
+      )}
     </div>
   );
 };

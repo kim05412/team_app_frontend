@@ -1,68 +1,48 @@
-// import { MutableRefObject, useRef } from "react";
+import { useState } from "react";
+import Modal from "./modal";
 
-// import axios from "axios";
+const UpdateModal = ({ book, isOpen, onClose, onSave }) => {
+  const [editedBook, setEditedBook] = useState(book);
 
-// interface SimplifiedBook {
-//   id?: number;
-//   createdDate?: string;
-//   publisher?: string;
-//   title?: string;
-//   link?: string;
-//   author?: string;
-//   pubDate?: string;
-//   description?: string;
-//   isbn?: string;
-//   isbn13?: string;
-//   itemId?: number;
-//   priceSales?: number;
-//   priceStandard?: number;
-//   stockStatus?: string;
-//   cover?: string;
-//   categoryId?: number;
-//   categoryName?: string;
-//   customerReviewRank?: number;
-// }
+  const handleChange = (field, value) => {
+    setEditedBook({ ...editedBook, [field]: value });
+  };
 
-// interface BookModifyModalProps {
-//   book: SimplifiedBook;
-//   onConfirm: (updatedBook: SimplifiedBook) => void;
-//   onCancel: () => void;
-// }
+  const handleSave = () => {
+    onSave(editedBook);
+    onClose();
+  };
 
-// const BookModifyModal = ({ book, onConfirm, onCancel }: BookModifyModalProps) => {
-//   const titleRef = useRef() as MutableRefObject<HTMLInputElement>;
-//   const authorRef = useRef() as MutableRefObject<HTMLInputElement>;
+  return (
+    <Modal isOpen={isOpen} onClose={onClose}>
+      <div>
+        <input type="text" value={editedBook.title} onChange={(e) => handleChange("title", e.target.value)} />
+        <input type="text" value={editedBook.publisher} onChange={(e) => handleChange("publisher", e.target.value)} />
+        <input type="text" value={editedBook.author} onChange={(e) => handleChange("author", e.target.value)} />
+        <input type="text" value={editedBook.isbn} onChange={(e) => handleChange("isbn", e.target.value)} />
+        <input type="text" value={editedBook.isbn13} onChange={(e) => handleChange("isbn13", e.target.value)} />
+        <input
+          type="text"
+          value={editedBook.priceSales}
+          onChange={(e) => handleChange("priceSales", Number(e.target.value))}
+        />
+        <input
+          type="text"
+          value={editedBook.priceStandard}
+          onChange={(e) => handleChange("priceStandard", Number(e.target.value))}
+        />
+        <input
+          type="text"
+          value={editedBook.stockStatus}
+          onChange={(e) => handleChange("stockStatus", e.target.value)}
+        />
+        <input type="text" value={editedBook.cover} onChange={(e) => handleChange("cover", e.target.value)} />
+        <textarea value={editedBook.description} onChange={(e) => handleChange("description", e.target.value)} />
+        <button onClick={handleSave}>저장</button>
+        <button onClick={onClose}>닫기</button>
+      </div>
+    </Modal>
+  );
+};
 
-//   const handleConfirm = async () => {
-//     const updatedBook: SimplifiedBook = {
-//       ...book,
-//       title: titleRef.current.value || book.title,
-//       author: authorRef.current.value || book.author,
-//     };
-
-//     try {
-//       const response = await axios.put(`http://localhost8080/api/books/${book.id}`, updatedBook);
-//       console.log(response.data);
-//       onConfirm(updatedBook);
-//     } catch (error) {
-//       console.error("서버에 요청을 보내는 중 에러가 발생했습니다", error);
-//     }
-//   };
-
-//   return (
-//     <Wrapper>
-//       <Container>
-//         <input defaultValue={book.title} ref={titleRef} placeholder="Title" />
-//         <input defaultValue={book.author} ref={authorRef} placeholder="Author" />
-//         <ButtonContainer>
-//           <Button primary onClick={handleConfirm}>
-//             수정
-//           </Button>
-//           <Button onClick={onCancel}>취소</Button>
-//         </ButtonContainer>
-//       </Container>
-//     </Wrapper>
-//   );
-// };
-
-// export default BookModifyModal;
+export default UpdateModal;

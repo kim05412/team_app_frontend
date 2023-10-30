@@ -7,10 +7,6 @@ import { FormContainer } from "./styles";
 // programatic방식으로 라우팅 처리
 
 const BookForm = ({ onSave, onClose }) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalContent, setModalContent] = useState<React.ReactNode | null>(null);
-  const navigate = useNavigate();
-  const [bookData, setBooksData] = useState<SimplifiedBook[]>([]);
   const [hasTempBook, setHasTempBook] = useState(false);
   const [showTempSaved, setShowTempSaved] = useState(false);
   const publisherRef = useRef() as MutableRefObject<HTMLInputElement>;
