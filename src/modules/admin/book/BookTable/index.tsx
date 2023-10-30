@@ -67,7 +67,12 @@ const BookTable = () => {
 
   //선택
   const [isEditing, setIsEditing] = useState(false);
+  // selectedBooks는 숫자 타입의 배열을 저장하는 상태 변수
   const [selectedBooks, setSelectedBooks] = useState<number[]>([]);
+
+  //수정
+  const [editingBook, setEditingBook] = useState(null);
+  const [formData, setFormData] = useState<SimplifiedBook>({} as SimplifiedBook);
 
   // 함수 정의
   useEffect(() => {
@@ -140,22 +145,29 @@ const BookTable = () => {
     }
   };
   //선택
-  const handleEditClick = () => {
+  const handleEditBtnClick = () => {
     setIsEditing(!isEditing);
   };
-
-  const handleSelectBook = (bookId) => {
-    if (selectedBooks.includes(bookId)) {
-      setSelectedBooks(selectedBooks.filter((id) => id !== bookId));
+  //  책을 선택 or 선택 취소 시 호출
+  const handleSelectBook = (itemId) => {
+    // 이미 선택된 책 존재. :취소 호출
+    if (selectedBooks.includes(itemId)) {
+      // filter: 배열의 각 요소에 대해 주어진 함수를 실행하고, 그 함수가 true를 반환하는 요소들로 새로운 배열을 만들어 반환
+      // filter:itemId가 아닌 다른 요소만 새로운 배열로 상태(SelectedBooks)를 업데이트
+      // id는 selectedBooks 배열의 각 요소를 나타내는 임시 변수
+      setSelectedBooks(selectedBooks.filter((id) => id !== itemId));
+      // itemId와 일치하지 않는 상태들의 집합(update) == 일치하는 것들은 선택 취소
     } else {
-      setSelectedBooks([...selectedBooks, bookId]);
+      //책 선택 호출
+      //...selectedBooks, itemId : selectedBooks가 itemId를 요소로 가지는 배열.
+      setSelectedBooks([...selectedBooks, itemId]);
     }
   };
-  //삭제
 
-  const deleteBook = async (bookId) => {
+  //삭제
+  const deleteBook = async (itemId) => {
     try {
-      const response = await axios.delete(`${BASE_URL}/delete/${bookId}`);
+      const response = await axios.delete(`${BASE_URL}/${itemId}`);
       return response.data;
     } catch (error) {
       console.error("책을 삭제하는 중에 오류가 발생했습니다", error);
@@ -167,7 +179,7 @@ const BookTable = () => {
       const confirmDelete = window.confirm(`총 ${selectedBooks.length}개의 데이터를 삭제하시겠습니까?`);
       if (confirmDelete) {
         try {
-          const responses = await Promise.all(selectedBooks.map((bookId) => deleteBook(bookId)));
+          const responses = await Promise.all(selectedBooks.map((itemId) => deleteBook(itemId)));
           if (responses.every((response) => response)) {
             setUpdateData((prev) => !prev);
             setSelectedBooks([]);
@@ -192,6 +204,38 @@ const BookTable = () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [isEditing, selectedBooks]);
+
+  //수정
+
+  const handleUpdateBook = async (itemId, updatedData) => {
+    try {
+      const response = await axios.patch(`${BASE_URL}/${itemId}`, updatedData);
+      return response.data;
+    } catch (error) {
+      console.error("책을 수정하는 중에 오류가 발생했습니다", error);
+      throw error;
+    }
+  };
+
+  const handleEditClick = (book: SimplifiedBook) => {
+    setFormData(book);
+  };
+
+  const handleFormChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+  const handleSaveClick = async () => {
+    try {
+      const response = await handleUpdateBook(editingBook.itemId, formData);
+      if (response) {
+        setUpdateData((prev) => !prev); // 데이터가 수정되었으므로 updateData 상태를 바꿔줌
+        setEditingBook(null);
+      }
+    } catch (error) {
+      console.error("수정 처리 중 오류가 발생했습니다", error);
+    }
+  };
 
   return (
     <div>
@@ -218,7 +262,7 @@ const BookTable = () => {
                     삭제하기
                   </Button>
                 )}
-                <Button onClick={handleEditClick}>{isEditing ? "편집취소" : "편집하기"}</Button>
+                <Button onClick={handleEditBtnClick}>{isEditing ? "편집취소" : "편집하기"}</Button>
               </div>
             </ButtonGroup>
           </ButtonContainer>
@@ -251,6 +295,11 @@ const BookTable = () => {
                       />
                     </td>
                   )}
+                  {isEditing && (
+                    <td>
+                      <Button onClick={() => handleEditClick(book)}>수정하기</Button>
+                    </td>
+                  )}
                   {(viewAll ? columns.concat(additionalColumns) : columns).map((column) => (
                     <td key={column}>
                       {book[column] !== undefined ? (
@@ -278,6 +327,52 @@ const BookTable = () => {
             </tbody>
           </table>
         </TableContainer>
+        {editingBook && (
+          <div>
+            <h3>책 정보 수정</h3>
+            <form>
+              <div>
+                <label htmlFor="title">제목: </label>
+                <input type="text" id="title" name="title" value={formData.title} onChange={handleFormChange} />
+              </div>
+              <div>
+                <label htmlFor="author">저자: </label>
+                <input type="text" id="author" name="author" value={formData.author} onChange={handleFormChange} />
+              </div>
+              <div>
+                <label htmlFor="publisher">출판사: </label>
+                <input
+                  type="text"
+                  id="publisher"
+                  name="publisher"
+                  value={formData.publisher}
+                  onChange={handleFormChange}
+                />
+              </div>
+              <div>
+                <label htmlFor="priceSales">판매가: </label>
+                <input
+                  type="number"
+                  id="priceSales"
+                  name="priceSales"
+                  value={formData.priceSales}
+                  onChange={handleFormChange}
+                />
+              </div>
+              <div>
+                <label htmlFor="priceStandard">정가: </label>
+                <input
+                  type="number"
+                  id="priceStandard"
+                  name="priceStandard"
+                  value={formData.priceStandard}
+                  onChange={handleFormChange}
+                />
+              </div>
+              <Button onClick={handleSaveClick}>저장하기</Button>
+            </form>
+          </div>
+        )}
         <div>
           {/* 페이징컨트롤 */}
           <button onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>
