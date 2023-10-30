@@ -256,7 +256,7 @@ const InventoryComponent = () => {
       <EditDeleteButton onClick={handleDelete} disabled={!selectedRowId}>
         삭제
       </EditDeleteButton>
-      <EditDeleteButton onClick={sendDataToRedis}>전송</EditDeleteButton>
+      <EditDeleteButton onClick={sendDataToRedis}>저장</EditDeleteButton>
 
       {isModalOpen && (
         <>
