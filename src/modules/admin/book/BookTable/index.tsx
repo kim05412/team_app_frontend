@@ -164,10 +164,14 @@ const BookTable = () => {
     }
   };
 
-  //삭제
-  const deleteBook = async (itemId) => {
+  // 여러개 삭제 -> 리스트
+  const deleteBook = async (itemIds) => {
     try {
-      const response = await axios.delete(`${BASE_URL}/${itemId}`);
+      const response = await axios.delete(`${BASE_URL}/`, {
+        data: itemIds,
+      });
+      // alert(`책의 ID는 ${response.data.id}입니다.`);
+      alert(`총 ${response.data.length}가 성공적으로 삭제 되었습니다.`);
       return response.data;
     } catch (error) {
       console.error("책을 삭제하는 중에 오류가 발생했습니다", error);
@@ -180,8 +184,11 @@ const BookTable = () => {
       if (confirmDelete) {
         try {
           const responses = await Promise.all(selectedBooks.map((itemId) => deleteBook(itemId)));
+          // 모든 배열의 요소(response)가 true일때
           if (responses.every((response) => response)) {
+            // 토글 리렌더링
             setUpdateData((prev) => !prev);
+            //초기화
             setSelectedBooks([]);
           }
         } catch (error) {
@@ -275,7 +282,8 @@ const BookTable = () => {
           <table style={{ overflowX: "auto" }}>
             <thead>
               <tr>
-                {isEditing && <th>선택</th>}
+                {isEditing && <th>삭제</th>}
+                {isEditing && <th>수정</th>}
                 {columns.map((column) => (
                   <th key={column}>{column}</th>
                 ))}
