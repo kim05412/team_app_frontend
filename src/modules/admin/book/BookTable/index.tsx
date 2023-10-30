@@ -165,17 +165,30 @@ const BookTable = () => {
   };
 
   // 여러개 삭제 -> 리스트
-  const deleteBook = async (itemIds) => {
+  const deleteBook = async (selectedBooks) => {
     try {
-      const response = await axios.delete(`${BASE_URL}/`, {
-        data: itemIds,
+      console.log(selectedBooks);
+      const response = await axios.delete("http://localhost:8082/api/books", {
+        params: {
+          itemIds: selectedBooks.join(","),
+        },
       });
-      // alert(`책의 ID는 ${response.data.id}입니다.`);
-      alert(`총 ${response.data.length}가 성공적으로 삭제 되었습니다.`);
-      return response.data;
+
+      if (response.data && response.data.deletedBooks) {
+        // alert(
+        //   `총 ${response.data.deletedBooks.length}개의 도서정보가 성공적으로 삭제 되었습니다.${response.data.deletedBooks}`,
+        // );
+        alert(
+          `총 ${
+            response.data.deletedBooks.length
+          }개의 도서정보가 성공적으로 삭제 되었습니다. 삭제된 도서 ID: ${response.data.deletedBooks.join(", ")}`,
+        );
+      } else {
+        alert("삭제된 도서정보가 없습니다.");
+      }
     } catch (error) {
       console.error("책을 삭제하는 중에 오류가 발생했습니다", error);
-      throw error;
+      alert("삭제 처리 중 오류가 발생했습니다");
     }
   };
   const handleDelete = async () => {
@@ -183,14 +196,10 @@ const BookTable = () => {
       const confirmDelete = window.confirm(`총 ${selectedBooks.length}개의 데이터를 삭제하시겠습니까?`);
       if (confirmDelete) {
         try {
-          const responses = await Promise.all(selectedBooks.map((itemId) => deleteBook(itemId)));
-          // 모든 배열의 요소(response)가 true일때
-          if (responses.every((response) => response)) {
-            // 토글 리렌더링
-            setUpdateData((prev) => !prev);
-            //초기화
-            setSelectedBooks([]);
-          }
+          // selectedBooks === itemIds
+          setUpdateData((prev) => !prev);
+          deleteBook(selectedBooks);
+          setSelectedBooks([]);
         } catch (error) {
           console.error("삭제 처리 중 오류가 발생했습니다", error);
         }
@@ -293,13 +302,13 @@ const BookTable = () => {
             </thead>
             <tbody>
               {currentBooks.map((book) => (
-                <tr key={book.id}>
+                <tr key={book.itemId}>
                   {isEditing && (
                     <td>
                       <input
                         type="checkbox"
-                        checked={selectedBooks.includes(book.id)}
-                        onChange={() => handleSelectBook(book.id)}
+                        checked={selectedBooks.includes(book.itemId)}
+                        onChange={() => handleSelectBook(book.itemId)}
                       />
                     </td>
                   )}
