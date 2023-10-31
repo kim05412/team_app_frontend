@@ -2,7 +2,7 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
-import useSWR from "swr";
+import useSWR, { mutate } from "swr";
 import Modal from "./modal";
 import {
   EditDeleteButton,
@@ -58,9 +58,16 @@ const INIT_DATA: Page<InventoryData> = {
 };
 const INVENTORY_DATA_KEY = "/api/inventories";
 
-const inventoryFetcher = async (page, keyword) => {
-  const params = { page: page - 1, size: PAGE_SIZE };
-  if (keyword) params.keyword = keyword;
+const inventoryFetcher = async (page, keyword, searchType) => {
+  let params = { page: page - 1, size: PAGE_SIZE };
+
+  if (searchType === "title") {
+    params = { ...params, title: keyword };
+  } else if (searchType === "itemId") {
+    params = { ...params, itemId: keyword };
+  } else if (searchType === "publisher") {
+    params = { ...params, publisher: keyword };
+  }
 
   try {
     const response = await inventoryApi.get<InventoryData[]>(`${INVENTORY_DATA_KEY}/paging/search`, { params });
@@ -71,10 +78,10 @@ const inventoryFetcher = async (page, keyword) => {
   }
 };
 
-export const useInventoryDataPaged = (page, keyword) => {
+export const useInventoryDataPaged = (page, keyword, searchType) => {
   const { data: pageData = INIT_DATA, error } = useSWR<Page<InventoryData>>(
-    [INVENTORY_DATA_KEY + "/paging/search", page, keyword],
-    () => inventoryFetcher(page, keyword),
+    [INVENTORY_DATA_KEY + "/paging/search", page, keyword, searchType],
+    () => inventoryFetcher(page, keyword, searchType),
     {
       fallbackData: INIT_DATA,
       revalidateOnFocus: false,
@@ -104,7 +111,8 @@ const InventoryComponent = () => {
 
   const [keyword, setKeyword] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const pageData = useInventoryDataPaged(page, searchTerm);
+  const [searchType, setSearchType] = useState("title");
+  const pageData = useInventoryDataPaged(page, searchTerm, searchType);
 
   const changePageAndPushHistory = (newPage) => {
     setPage(newPage);
@@ -112,11 +120,11 @@ const InventoryComponent = () => {
     window.scrollTo(0, 0);
   };
 
-  const executeSearch = () => {
-    setPage(1);
-    setSearchTerm(keyword);
-    navigate(`?page=1&search=${keyword}`);
-  };
+  // const executeSearch = () => {
+  //   setPage(1);
+  //   setSearchTerm(keyword);
+  //   navigate(`?page=1&search=${keyword}`);
+  // };
 
   const handleKeyPress = (event) => {
     if (event.key === "Enter") {
@@ -181,15 +189,51 @@ const InventoryComponent = () => {
     alert("저장되었습니다!");
   };
 
+  const executeSearch = async () => {
+    setPage(1);
+
+    let params = { page: 0, size: PAGE_SIZE };
+
+    // Search type에 따라 params 수정
+    if (searchType === "title") {
+      params = { ...params, title: keyword };
+    } else if (searchType === "itemId") {
+      params = { ...params, itemId: keyword };
+    } else if (searchType === "publisher") {
+      params = { ...params, publisher: keyword };
+    }
+
+    setSearchTerm(keyword);
+
+    navigate(`?page=1&search=${keyword}`);
+    try {
+      const response = await inventoryApi.get(`${INVENTORY_DATA_KEY}/paging/search`, { params });
+      mutate([INVENTORY_DATA_KEY + "/paging/search", 1, keyword, searchType], response.data, false);
+    } catch (e) {
+      console.error("인벤토리 데이터 가져오기 에러:", e);
+      mutate([INVENTORY_DATA_KEY + "/paging/search", 1, keyword, searchType], INIT_DATA, false);
+    }
+  };
+
+  // 검색 타입을 변경하는 함수
+  const changeSearchType = (event) => {
+    setSearchType(event.target.value);
+  };
+
   return (
     <InventoryPage>
       <h1>Inventory Page</h1>
+      <select value={searchType} onChange={changeSearchType}>
+        <option value="title">제목</option>
+        <option value="itemId">ItemId</option>
+        <option value="publisher">출판사</option>
+      </select>
       <SearchInput
         type="text"
         value={keyword}
         onChange={(e) => setKeyword(e.target.value)}
         onKeyPress={handleKeyPress}
-        placeholder="제목검색"
+        placeholder="검색"
       />
       <SearchButton onClick={executeSearch}>검색</SearchButton>
       <InventoryTable>
