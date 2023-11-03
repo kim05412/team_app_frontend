@@ -28,7 +28,7 @@ function PublisherTable() {
         {publishers.map((publisher, index) => (
           <tr key={index}>
             <td>
-              <Link to={`/publishers/${publisher.name}`}>{publisher.name}</Link>
+              <Link to={`/publishers/${encodeURIComponent(publisher.name)}`}>{publisher.name}</Link>
             </td>
             <td>{publisher.count}</td>
           </tr>

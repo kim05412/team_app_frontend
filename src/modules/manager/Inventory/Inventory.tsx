@@ -120,12 +120,6 @@ const InventoryComponent = () => {
     window.scrollTo(0, 0);
   };
 
-  // const executeSearch = () => {
-  //   setPage(1);
-  //   setSearchTerm(keyword);
-  //   navigate(`?page=1&search=${keyword}`);
-  // };
-
   const handleKeyPress = (event) => {
     if (event.key === "Enter") {
       event.preventDefault();
@@ -190,7 +184,9 @@ const InventoryComponent = () => {
   };
 
   const executeSearch = async () => {
-    setPage(1);
+    if (searchTerm !== keyword) {
+      setPage(1);
+    }
 
     let params = { page: 0, size: PAGE_SIZE };
 
@@ -215,9 +211,11 @@ const InventoryComponent = () => {
     }
   };
 
-  // 검색 타입을 변경하는 함수
   const changeSearchType = (event) => {
+    event.preventDefault();
     setSearchType(event.target.value);
+    setKeyword("");
+    setSearchTerm("");
   };
 
   return (

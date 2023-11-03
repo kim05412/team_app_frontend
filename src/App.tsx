@@ -4,6 +4,8 @@ import { adminRoutes } from "./modules/admin/routes";
 import { managerRoutes } from "@/modules/manager/routes";
 import Layout from "./layout/Layout";
 import ResetStyle from "./styles/reset";
+import PublisherBooks from "./modules/manager/Publisher/PublisherBooks";
+import PublisherTable from "./modules/manager/Publisher/Publisher";
 
 const App = () => {
   return (
@@ -15,6 +17,8 @@ const App = () => {
           <Route path="/" element={<Main />} />
           {adminRoutes}
           {managerRoutes}
+          <Route path="/publishers/:publisherName" element={<PublisherBooks />} />
+          <Route path="/publishers" element={<PublisherTable />} />
         </Routes>
       </Layout>
     </BrowserRouter>
