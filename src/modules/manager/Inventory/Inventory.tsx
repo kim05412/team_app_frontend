@@ -169,18 +169,38 @@ const InventoryComponent = () => {
   };
 
   const sendDataToRedis = async () => {
-    for (const item of pageData.content) {
-      const { itemId, stockStatus } = item;
+    try {
+      const response = await inventoryApi.get(`${INVENTORY_DATA_KEY}/paging/search`, {
+        params: { page: 0, size: PAGE_SIZE },
+      });
+      const totalPages = response.data.totalPages;
+      const allItems = [];
 
-      try {
-        const response = await inventoryApi.post("/api/send-to-redis", { itemId, stockStatus });
-        console.log(`Data sent to Redis: ${response.data}`);
-      } catch (error) {
-        console.error(`Error sending data to Redis for item ${itemId}: ${error}`);
+      for (let i = 0; i < totalPages; i++) {
+        const pageResponse = await inventoryApi.get(`${INVENTORY_DATA_KEY}/paging/search`, {
+          params: { page: i, size: PAGE_SIZE },
+        });
+        allItems.push(...pageResponse.data.content);
       }
-    }
 
-    alert("저장되었습니다!");
+      const uniqueItems = Array.from(new Set(allItems.map((item) => item.itemId))).map((itemId) => {
+        return allItems.find((item) => item.itemId === itemId);
+      });
+
+      for (const item of uniqueItems) {
+        const { itemId, stockStatus } = item;
+
+        try {
+          await inventoryApi.post("/api/send-to-redis", { itemId, stockStatus });
+        } catch (error) {
+          console.error(`Error sending data to Redis for item ${itemId}: ${error}`);
+        }
+      }
+
+      alert("저장되었습니다!");
+    } catch (e) {
+      console.error("인벤토리 데이터 가져오기 에러:", e);
+    }
   };
 
   const executeSearch = async () => {
