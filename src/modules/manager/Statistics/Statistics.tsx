@@ -6,7 +6,6 @@ import "react-datepicker/dist/react-datepicker.css";
 interface RedisData {
   itemId: string;
   stockStatus: string;
-  previousStockStatus: string;
   increase: string;
   decrease: string;
 }
@@ -35,7 +34,7 @@ const Statistics: React.FC = () => {
           date: selectedDate.toISOString().split("T")[0], // YYYY-MM-DD 형식으로 날짜를 변환합니다
         },
       });
-      setData(response.data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+      setData(response.data.sort((a, b) => a.itemId.localeCompare(b.itemId)));
     } catch (error) {
       console.error("Error fetching Redis data:", error);
     }
@@ -63,7 +62,6 @@ const Statistics: React.FC = () => {
         <thead>
           <tr>
             <th>Item ID</th>
-            <th>Previous Stock Status</th>
             <th>Current Stock Status</th>
             <th>Increase</th>
             <th>Decrease</th>
@@ -73,7 +71,6 @@ const Statistics: React.FC = () => {
           {data.map((item, index) => (
             <tr key={index}>
               <td>{item.itemId}</td>
-              <td>{item.previousStockStatus}</td>
               <td>{item.stockStatus}</td>
               <td>{item.increase}</td>
               <td>{item.decrease}</td>
