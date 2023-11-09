@@ -2,6 +2,15 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import {
+  StatisticsPage,
+  StatisticsTable,
+  StatisticsTableHeader,
+  StatisticsTableBody,
+  TableData,
+  TableHeader,
+  CustomButton,
+} from "./statistics.style";
 
 interface RedisData {
   itemId: string;
@@ -40,45 +49,35 @@ const Statistics: React.FC = () => {
     }
   };
 
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage((prevPage) => prevPage - 1);
-    }
-  };
-
-  const handleNextPage = () => {
-    setCurrentPage((prevPage) => prevPage + 1);
-  };
-
   return (
-    <div>
+    <StatisticsPage>
       <h1>Redis Statistics</h1>
       <DatePicker
         selected={selectedDate}
         onChange={(date: Date) => setSelectedDate(date)}
         customInput={<CustomInput />}
       />
-      <table>
-        <thead>
+      <StatisticsTable>
+        <StatisticsTableHeader>
           <tr>
-            <th>Item ID</th>
-            <th>Current Stock Status</th>
-            <th>Increase</th>
-            <th>Decrease</th>
+            <TableHeader>Item ID</TableHeader>
+            <TableHeader>Current Stock Status</TableHeader>
+            <TableHeader>Increase</TableHeader>
+            <TableHeader>Decrease</TableHeader>
           </tr>
-        </thead>
-        <tbody>
+        </StatisticsTableHeader>
+        <StatisticsTableBody>
           {data.map((item, index) => (
             <tr key={index}>
-              <td>{item.itemId}</td>
-              <td>{item.stockStatus}</td>
-              <td>{item.increase}</td>
-              <td>{item.decrease}</td>
+              <TableData>{item.itemId}</TableData>
+              <TableData>{item.stockStatus}</TableData>
+              <TableData>{item.increase}</TableData>
+              <TableData>{item.decrease}</TableData>
             </tr>
           ))}
-        </tbody>
-      </table>
-    </div>
+        </StatisticsTableBody>
+      </StatisticsTable>
+    </StatisticsPage>
   );
 };
 

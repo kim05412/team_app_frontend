@@ -17,6 +17,7 @@ import {
   SearchInput,
   TableData,
   TableHeader,
+  StyledLink,
 } from "./inventory.style";
 
 const inventoryApi = axios.create({
@@ -39,6 +40,7 @@ interface InventoryData {
   priceSales: number;
   priceStandard: number;
   stockStatus: string;
+  date: string; // date 정보 추가
 }
 
 interface Page<T> {
@@ -188,10 +190,10 @@ const InventoryComponent = () => {
       });
 
       for (const item of uniqueItems) {
-        const { itemId, stockStatus } = item;
+        const { itemId, stockStatus, isbn, date } = item; // isbn, date 정보 추가
 
         try {
-          await inventoryApi.post("/api/send-to-redis", { itemId, stockStatus });
+          await inventoryApi.post("/api/send-to-redis", { itemId, stockStatus, isbn, date }); // isbn, date 정보 추가
         } catch (error) {
           console.error(`Error sending data to Redis for item ${itemId}: ${error}`);
         }
@@ -290,9 +292,9 @@ const InventoryComponent = () => {
                 <TableData>{item.publisher}</TableData>
                 <TableData>{item.title}</TableData>
                 <TableData>
-                  <a href={item.link} target="_blank" rel="noopener noreferrer">
+                  <StyledLink href={item.link} target="_blank" rel="noopener noreferrer">
                     링크
-                  </a>
+                  </StyledLink>
                 </TableData>
                 <TableData>{item.author}</TableData>
                 <TableData>{item.pubDate}</TableData>

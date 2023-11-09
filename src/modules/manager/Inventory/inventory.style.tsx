@@ -1,15 +1,19 @@
 // inventory.style.tsx
-
+import { Link } from "react-router-dom";
 import styled from "styled-components";
 
 export const InventoryPage = styled.div`
   padding: 20px;
   background-color: #f9f9f9;
+  font-family: Arial, sans-serif;
 `;
 
 export const InventoryTable = styled.table`
   width: 100%;
   border-collapse: collapse;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  overflow: hidden;
 `;
 
 export const InventoryTableHeader = styled.thead`
@@ -40,6 +44,8 @@ export const TableHeader = styled.th`
 export const SearchInput = styled.input`
   margin-right: 10px;
   padding: 5px;
+  border: none;
+  border-radius: 5px;
 `;
 
 export const SearchButton = styled.button`
@@ -48,6 +54,7 @@ export const SearchButton = styled.button`
   color: #fff;
   border: none;
   cursor: pointer;
+  border-radius: 5px;
 `;
 
 export const EditDeleteButton = styled.button`
@@ -57,6 +64,7 @@ export const EditDeleteButton = styled.button`
   color: #fff;
   border: none;
   cursor: pointer;
+  border-radius: 5px;
 `;
 
 export const Overlay = styled.div`
@@ -73,4 +81,12 @@ export const Overlay = styled.div`
 
 export const Footer = styled.footer`
   margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
+export const StyledLink = styled.a`
+  color: blue;
+  text-decoration: none;
 `;
