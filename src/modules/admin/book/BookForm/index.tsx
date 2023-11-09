@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useState, useEffect, MutableRefObject, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { SimplifiedBook } from "../Book";
+import { BASE_URL, SimplifiedBook } from "../Book";
 import { FormContainer } from "./styles";
 
 // programatic방식으로 라우팅 처리
@@ -28,7 +28,7 @@ const BookForm = ({ onSave, onClose }) => {
 
   const createBookData = async (book, isTempBook) => {
     try {
-      const response = await axios.post("http://localhost:8082/api/books/add", book);
+      const response = await axios.post(`${BASE_URL}/add`, book);
       console.log(response.data);
       if (isTempBook) {
         clearTempBook();

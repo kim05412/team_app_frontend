@@ -261,27 +261,6 @@ const BookTable = () => {
     }
   };
 
-  // const handleUpdateBook = async (updatedBook: SimplifiedBook) => {
-  //   try {
-  //     // 서버에 수정 요청 보내기
-  //     const response = await updateBookOnServer(updatedBook);
-  //     if (response) {
-  //       // 성공 시 모달 닫기
-  //       setIsModalOpen(false);
-  //       // 성공 알림
-  //       alert("도서 정보가 성공적으로 수정되었습니다.");
-  //       // 도서 목록 업데이트
-  //       // ...
-  //     } else {
-  //       // 서버에서 실패 응답이 왔을 경우
-  //       alert("도서 정보 수정에 실패했습니다.");
-  //     }
-  //   } catch (error) {
-  //     // 네트워크 오류 등으로 인한 실패
-  //     alert("도서 정보 수정에 실패했습니다.");
-  //   }
-  // };
-
   return (
     <div>
       <BookContainer>

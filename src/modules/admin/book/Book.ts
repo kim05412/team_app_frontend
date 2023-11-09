@@ -1,4 +1,4 @@
-export const BASE_URL = "http://localhost:8082/api/books";
+export const BASE_URL = "http://localhost:8082/books";
 
 export interface SimplifiedBook {
   id: number;

@@ -1,12 +1,10 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { Route } from "react-router-dom";
 import BookManagement from "./BookManagement/BookManagement";
-import Merchandiser from "./Merchandiser/Merchandiser";
-import BookForm from "./book/BookForm";
-import BookDetail from "./book/BookDetail";
+import MerchandiserManagement from "./MerchandiserManagement";
 
 export const adminRoutes = (
   <>
     <Route path="books" element={<BookManagement />} />
-    <Route path="merchandiser" element={<Merchandiser />} />
+    <Route path="merchandiser" element={<MerchandiserManagement />} />
   </>
 );

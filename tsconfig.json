@@ -3,7 +3,10 @@
     "outDir": "./dist/",
     "module": "ESNext",
     "target": "ES2020",
-    "lib": ["ESNext", "DOM"],
+    "lib": [
+      "ESNext",
+      "DOM"
+    ],
     "allowJs": true,
     "jsx": "preserve",
     "moduleResolution": "node",
@@ -11,13 +14,23 @@
       {
         "name": "@styled/typescript-styled-plugin",
         "lint": {
-          "validProperties": ["label"]
+          "validProperties": [
+            "label"
+          ]
+        },
+        "compilerOptions": {
+          // 다른 컴파일러 옵션들...
+          "allowSyntheticDefaultImports": true,
+          "esModuleInterop": true
+          // 다른 컴파일러 옵션들...
         }
       }
     ],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
-    }    
+      "@/*": [
+        "src/*"
+      ]
+    }
   }
 }
