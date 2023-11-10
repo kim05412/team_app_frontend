@@ -9,7 +9,6 @@ import {
   StatisticsTableBody,
   TableData,
   TableHeader,
-  CustomButton,
 } from "./statistics.style";
 
 interface RedisData {
