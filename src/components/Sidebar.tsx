@@ -26,19 +26,22 @@ const Sidebar = () => {
           <Link to="/books">BookList</Link>
         </li>
         <li>
-          <Link to="/inventory">Inventory</Link>
+          <Link to="/inventory">재고관리</Link>
         </li>
         <li>
           <Link to="/merchandiser">Md</Link>
         </li>
         <li>
-          <Link to="/publishers">Publishers</Link>
+          <Link to="/publishers">출판사관리</Link>
         </li>
         <li>
-          <Link to="/statistics">Statistics</Link>
+          <Link to="/statistics">재고변동</Link>
         </li>
         <li>
-          <Link to="/order">Order</Link>
+          <Link to="/order">주문확인</Link>
+        </li>
+        <li>
+          <Link to="/newBooks">신간</Link>
         </li>
       </ul>
     </SidebarContainer>

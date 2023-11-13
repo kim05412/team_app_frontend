@@ -40,8 +40,8 @@ const OrderModal: FC<OrderModalProps> = ({ order, onClose, onOrderConfirm }) => 
               </OrderItem>
             ))}
           </ul>
-          <OrderButton onClick={() => onOrderConfirm(order)}>Confirm Order</OrderButton>
-          <CloseButton onClick={onClose}>Close</CloseButton>
+          <OrderButton onClick={() => onOrderConfirm(order)}>승인</OrderButton>
+          <CloseButton onClick={onClose}>닫기</CloseButton>
         </ModalContainer>
       )}
     </Modal>

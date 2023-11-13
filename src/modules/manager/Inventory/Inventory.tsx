@@ -131,6 +131,7 @@ const InventoryComponent = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRowId, setSelectedRowId] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleCheckboxChange = (id) => {
     setSelectedRowId(id);
@@ -171,6 +172,7 @@ const InventoryComponent = () => {
   };
 
   const sendDataToRedis = async () => {
+    setIsLoading(true);
     try {
       const response = await inventoryApi.get(`${INVENTORY_DATA_KEY}/paging/search`, {
         params: { page: 0, size: PAGE_SIZE },
@@ -202,6 +204,8 @@ const InventoryComponent = () => {
       alert("저장되었습니다!");
     } catch (e) {
       console.error("인벤토리 데이터 가져오기 에러:", e);
+    } finally {
+      setIsLoading(false); // 로딩 종료
     }
   };
 
@@ -320,7 +324,9 @@ const InventoryComponent = () => {
       <EditDeleteButton onClick={handleDelete} disabled={!selectedRowId}>
         삭제
       </EditDeleteButton>
-      <EditDeleteButton onClick={sendDataToRedis}>저장</EditDeleteButton>
+      <EditDeleteButton onClick={sendDataToRedis}>
+        {isLoading ? "저장 중입니다.." : "저장"} {/* 로딩 상태에 따라 다른 메시지 표시 */}
+      </EditDeleteButton>
 
       {isModalOpen && (
         <>

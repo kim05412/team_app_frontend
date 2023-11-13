@@ -57,9 +57,9 @@ function OrderList() {
       <OrderTable>
         <TableHeader>
           <TableRow>
-            <TableHeaderCell>Order ID</TableHeaderCell>
-            <TableHeaderCell>Name</TableHeaderCell>
-            <TableHeaderCell>Address</TableHeaderCell>
+            <TableHeaderCell>주문 번호</TableHeaderCell>
+            <TableHeaderCell>이름</TableHeaderCell>
+            <TableHeaderCell>주소</TableHeaderCell>
             <TableHeaderCell>Action</TableHeaderCell>
           </TableRow>
         </TableHeader>
@@ -70,7 +70,7 @@ function OrderList() {
               <TableCell>{order.name}</TableCell>
               <TableCell>{order.address}</TableCell>
               <TableCell>
-                <OrderButton onClick={() => openModal(order)}>Order Detail</OrderButton>
+                <OrderButton onClick={() => openModal(order)}>주문 상세</OrderButton>
               </TableCell>
             </TableRow>
           ))}
