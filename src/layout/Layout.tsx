@@ -13,7 +13,7 @@ const AppContainer = styled.div`
 
 const StyledSidebar = styled.div`
   width: 200px;
-  background-color: #4c5b70;
+  background-color: #529e4f;
 `;
 
 const ContentContainer = styled.div`

@@ -1,13 +1,18 @@
+import { HeaderContainer } from "@/components/Header";
 import HitsByTime from "../merchandiser/Stats/StatsByTime";
 import HitsByAgeGroup from "../merchandiser/Stats/StatsByUser";
 
 const MerchandiserManagement = () => {
   return (
     <div>
-      <h1>MD 관리자 페이지</h1>
+      <HeaderContainer>
+        <p>MD 페이지</p>
+      </HeaderContainer>
       {/* <StatsByTime /> */}
       <HitsByAgeGroup />
-      <HitsByTime />
+      {/* <Merchandise /> */}
+
+      {/* <HitsByTime /> */}
     </div>
   );
 };

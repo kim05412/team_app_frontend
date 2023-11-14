@@ -26,7 +26,7 @@ interface UserColumnViewsByBookAttribute {
   totalViews: number; // 해당 속성을 가진 도서들의 총 조회수
 }
 
-const Merchdise: React.FC = () => {
+const Merchandise: React.FC = () => {
   const [selectedUserColumn, setSelectedUserColumn] = useState<string>("");
   const [selectedBookAttribute, setSelectedBookAttribute] = useState<string>("");
   const [data, setData] = useState<UserColumnViewsByBookAttribute[]>([]);
@@ -81,4 +81,4 @@ const Merchdise: React.FC = () => {
   );
 };
 
-export default Merchdise;
+export default Merchandise;

@@ -1,17 +1,14 @@
 import styled from "styled-components";
 
-export const FormContainer = styled.div`
+export const TodayContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: 10px;
-  background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   padding: 20px;
   margin: 16px;
   overflow-y: auto;
   max-height: 90vh;
-  width: 700px;
+  width: 98%;
 
   p {
     display: flex;
@@ -24,6 +21,8 @@ export const FormContainer = styled.div`
     padding: 40px;
     border-radius: 8px;
     width: 88%;
+    
+    
   }
 
   label {
@@ -79,4 +78,3 @@ export const FormContainer = styled.div`
     margin-top: 20px;
   }
 `;
-
