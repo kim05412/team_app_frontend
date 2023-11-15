@@ -29,6 +29,11 @@ const CloseButton = styled.button`
   background-color: #45a044;
   color: white;
   cursor: pointer;
+  position: absolute; /* 절대 위치 지정 */
+  top: 0; /* 상단에 정렬 */
+  right: 0; /* 오른쪽에 정렬 */
+  margin-top: 1%;
+  margin-right: 2%;
 
   &:hover {
     background-color: darkgreen;
@@ -41,8 +46,8 @@ const UpModal = ({ isOpen, onClose, children }) => {
   return (
     <ModalContainer>
       <ModalContent>
+        <CloseButton onClick={onClose}>x</CloseButton>
         {children}
-        <CloseButton onClick={onClose}>닫기</CloseButton>
       </ModalContent>
     </ModalContainer>
   );
