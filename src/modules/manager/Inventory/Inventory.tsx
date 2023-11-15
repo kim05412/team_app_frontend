@@ -192,10 +192,10 @@ const InventoryComponent = () => {
       });
 
       for (const item of uniqueItems) {
-        const { itemId, stockStatus, isbn, date } = item; // isbn, date 정보 추가
+        const { itemId, stockStatus, isbn, date } = item;
 
         try {
-          await inventoryApi.post("/api/send-to-redis", { itemId, stockStatus, isbn, date }); // isbn, date 정보 추가
+          await inventoryApi.post("/api/send-to-redis", { itemId, stockStatus, isbn, date });
         } catch (error) {
           console.error(`Error sending data to Redis for item ${itemId}: ${error}`);
         }
@@ -205,7 +205,7 @@ const InventoryComponent = () => {
     } catch (e) {
       console.error("인벤토리 데이터 가져오기 에러:", e);
     } finally {
-      setIsLoading(false); // 로딩 종료
+      setIsLoading(false);
     }
   };
 
@@ -216,7 +216,6 @@ const InventoryComponent = () => {
 
     let params = { page: 0, size: PAGE_SIZE };
 
-    // Search type에 따라 params 수정
     if (searchType === "title") {
       params = { ...params, title: keyword };
     } else if (searchType === "itemId") {
@@ -324,9 +323,7 @@ const InventoryComponent = () => {
       <EditDeleteButton onClick={handleDelete} disabled={!selectedRowId}>
         삭제
       </EditDeleteButton>
-      <EditDeleteButton onClick={sendDataToRedis}>
-        {isLoading ? "저장 중입니다.." : "저장"} {/* 로딩 상태에 따라 다른 메시지 표시 */}
-      </EditDeleteButton>
+      <EditDeleteButton onClick={sendDataToRedis}>{isLoading ? "저장 중입니다.." : "저장"}</EditDeleteButton>
 
       {isModalOpen && (
         <>

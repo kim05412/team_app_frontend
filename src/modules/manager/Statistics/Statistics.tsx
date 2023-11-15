@@ -42,7 +42,12 @@ const Statistics: React.FC = () => {
           date: selectedDate.toISOString().split("T")[0], // YYYY-MM-DD 형식으로 날짜를 변환합니다
         },
       });
-      setData(response.data.sort((a, b) => a.itemId.localeCompare(b.itemId)));
+
+      const sortedData = response.data.sort((a, b) => a.itemId.localeCompare(b.itemId));
+      const uniqueData = sortedData.filter(
+        (item, index, self) => index === self.findIndex((t) => t.itemId === item.itemId),
+      );
+      setData(uniqueData);
     } catch (error) {
       console.error("Error fetching Redis data:", error);
     }
