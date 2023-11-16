@@ -124,7 +124,7 @@ const initialOptions: ApexOptions = {
       },
     },
   ],
-  colors: ["#C63A29", "#3384C6", "#24C497", "#F3B922", "#3D100B", "#522462"],
+  colors: ["#3384C6", "#C63A29", "#24C497", "#F3B922", "#3D100B", "#522462"],
 };
 const HitsByAgeGroup = () => {
   const [tableData, setTableData] = useState([]);

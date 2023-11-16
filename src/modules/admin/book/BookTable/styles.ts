@@ -1,10 +1,9 @@
 import styled from "styled-components";
 import Modal from "../BookForm/modal";
 
-
 // jsx스타일-css
 export const BookContainer = styled.div`
-header {
+  header {
     input {
       border: 1px solid green;
     }
@@ -96,8 +95,6 @@ export const ModalContainer = styled.div`
   z-index: 999;
 `;
 
-
-
 export const PageContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -107,7 +104,7 @@ export const PageContainer = styled.div`
 `;
 
 export const ButtonContainer = styled.div`
- display: flex;
+  display: flex;
   flex-direction: column;
   width: 100%;
   margin-bottom: 0px;
@@ -118,7 +115,6 @@ export const ButtonGroup = styled.div`
   align-items: center;
   gap: 10px;
   margin-top: 40px;
-  
 `;
 
 export const SearchContainer = styled.div`
@@ -151,7 +147,6 @@ export const Input = styled.input`
 `;
 
 export const Select = styled.select`
-margin-right: 10px;
-padding: 10px;
-
+  margin-right: 10px;
+  padding: 10px;
 `;

@@ -281,7 +281,7 @@ const BookTable = () => {
               <Button onClick={handleAdd}>추가하기</Button>
               <div>
                 {isEditing && (
-                  <Button onClick={handleDelete} onKeyPress={handleKeyDown}>
+                  <Button onClick={handleDelete} onKeyPress={handleKeyDown} style={{ marginRight: "10px" }}>
                     삭제하기
                   </Button>
                 )}
@@ -298,7 +298,7 @@ const BookTable = () => {
           <table style={{ overflowX: "auto" }}>
             <thead>
               <tr>
-                {isEditing && <th>삭제</th>}
+                {isEditing && <th className="margin-right-10px">삭제</th>}
                 {isEditing && <th>수정</th>}
                 {columns.map((column) => (
                   <th key={column}>{column}</th>
