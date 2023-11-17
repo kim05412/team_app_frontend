@@ -12,6 +12,6 @@ export const HeaderContainer = styled.div`
 
     padding: 40px;
     border-radius: 8px;
-    width: 95%;
+    width: 85%;
   }
 `;

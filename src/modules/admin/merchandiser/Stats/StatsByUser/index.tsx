@@ -17,6 +17,7 @@ import { StatsContainer } from "../style";
 type AggregatedCounts = {
   maleCount: number;
   femaleCount: number;
+  unknown: number;
 };
 interface GenderCount {
   Male: number;
@@ -44,6 +45,7 @@ interface HitsData {
     [ageGroup: number]: {
       Male: number;
       Female: number;
+      Unknown: number;
     };
   };
 }
@@ -188,108 +190,55 @@ const HitsByAgeGroup = () => {
         });
         const responseData = response.data;
 
-        // 테이블 데이터 변환
-        // 시간대별 데이터 집계를 위한 객체 초기화
-        // 시간대별 데이터 집계를 위한 객체 초기화
-        const aggregatedData: Record<string, AggregatedCounts> = {};
+        // 시간대별 연령대별 성별 조회수 계산
+        let timeSeriesData: Record<string, any> = {};
 
         Object.entries(responseData).forEach(([time, ageGroups]) => {
-          if (!aggregatedData[time]) {
-            aggregatedData[time] = { maleCount: 0, femaleCount: 0 };
-          }
+          let maleCount = 0;
+          let femaleCount = 0;
+          let maxGroup = { group: "", count: 0 };
 
-          Object.values(ageGroups).forEach((counts) => {
-            aggregatedData[time].maleCount += counts.Male;
-            aggregatedData[time].femaleCount += counts.Female;
-          });
-        });
-
-        // 집계된 데이터를 테이블 데이터 배열로 변환
-        const newTableData = Object.entries(aggregatedData).map(([time, counts]) => ({
-          time,
-          maleCount: counts.maleCount,
-          femaleCount: counts.femaleCount,
-        }));
-
-        // 시간대에 따라 데이터 정렬
-        const sortedTableData = newTableData.sort((a, b) => {
-          return a.time.localeCompare(b.time);
-        });
-        setTableData(sortedTableData);
-
-        if (selectedAgeGroup === 1) {
-          const seriesData = [];
-          const maleSeriesData = [];
-          const femaleSeriesData = [];
-
-          // 남성과 여성의 조회수 계산
-          Object.entries(responseData).forEach(([time, ageGroups]) => {
-            let maleTotal = 0;
-            let femaleTotal = 0;
-            Object.values(ageGroups).forEach((group) => {
-              maleTotal += group.Male;
-              femaleTotal += group.Female;
-            });
-
-            maleSeriesData.push(maleTotal);
-            femaleSeriesData.push(femaleTotal);
-          });
-
-          seriesData.push(
-            { name: "Male", data: maleSeriesData, type: "column" },
-            { name: "Female", data: femaleSeriesData, type: "column" },
-          );
-
-          // 모든 연령대 수집하기
-          const allAgeGroups = new Set<number>();
-          Object.values(responseData).forEach((ageGroups) => {
-            Object.keys(ageGroups).forEach((ageGroupStr) => {
-              const ageGroup = parseInt(ageGroupStr, 10);
-              allAgeGroups.add(ageGroup);
-            });
-          });
-
-          // 각 연령대별 조회수 라인 차트 시리즈 추가
-          allAgeGroups.forEach((ageGroup) => {
-            const ageGroupData = [];
-            Object.entries(responseData).forEach(([time, ageCounts]) => {
-              const groupData = ageCounts[ageGroup];
-              if (groupData) {
-                const totalHits = groupData.Male + groupData.Female;
-                ageGroupData.push({ x: time, y: totalHits });
-              }
-            });
-
-            seriesData.push({ name: `Age ${ageGroup}`, data: ageGroupData, type: "line" });
-          });
-
-          setSeries(seriesData);
-        } else {
-          // 특정 연령대에 대한 처리 (ageGroup != 1)
-          const totalSeriesData = [];
-          const maleSeriesData = [];
-          const femaleSeriesData = [];
-
-          Object.entries(responseData).forEach(([time, ageGroups]) => {
-            const ageGroupData = ageGroups[selectedAgeGroup];
-            if (ageGroupData) {
-              const totalHits = ageGroupData.Male + ageGroupData.Female;
-              totalSeriesData.push(totalHits);
-              maleSeriesData.push(ageGroupData.Male);
-              femaleSeriesData.push(ageGroupData.Female);
+          Object.entries(ageGroups).forEach(([group, counts]) => {
+            maleCount += counts.Male || 0;
+            femaleCount += counts.Female || 0;
+            let totalCount = counts.Male + counts.Female + (counts.Unknown || 0);
+            if (totalCount > maxGroup.count) {
+              maxGroup = { group, count: totalCount };
             }
           });
 
-          setSeries([
-            { name: "Male", data: maleSeriesData, type: "column" },
-            { name: "Female", data: femaleSeriesData, type: "column" },
-            { name: "Total", data: totalSeriesData, type: "line" },
-          ]);
-        }
-        setOptions((prevOptions) => ({
-          ...prevOptions,
-          xaxis: { ...prevOptions.xaxis, categories: Object.keys(responseData) },
-        }));
+          timeSeriesData[time] = {
+            maleCount,
+            femaleCount,
+            maxGroup: maxGroup.group,
+          };
+        });
+
+        setTableData(
+          Object.entries(timeSeriesData).map(([time, data]) => ({
+            time,
+            maleCount: data.maleCount,
+            femaleCount: data.femaleCount,
+            maxGroup: data.maxGroup,
+          })),
+        );
+
+        // 연령별 및 성별별 총 조회수 계산
+        let maleSeriesData = [];
+        let femaleSeriesData = [];
+        let totalSeriesData = [];
+
+        Object.keys(timeSeriesData).forEach((time) => {
+          maleSeriesData.push(timeSeriesData[time].maleCount);
+          femaleSeriesData.push(timeSeriesData[time].femaleCount);
+          totalSeriesData.push(timeSeriesData[time].maleCount + timeSeriesData[time].femaleCount);
+        });
+
+        setSeries([
+          { name: "Male", data: maleSeriesData, type: "column" },
+          { name: "Female", data: femaleSeriesData, type: "column" },
+          { name: "Total", data: totalSeriesData, type: "line" },
+        ]);
       } catch (error) {
         console.error("Error fetching hits by age group:", error);
       }
