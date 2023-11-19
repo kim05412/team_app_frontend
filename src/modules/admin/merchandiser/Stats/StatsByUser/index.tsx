@@ -14,6 +14,14 @@ import { StatsContainer } from "../style";
 //     "10:00": {10: {"Male": 1, "Female": 2}, 20: {"Male": 1, "Female": 2} },
 //     "11:00": {30: {"Male": 1, "Female": 2}, 40: {"Male": 1, "Female": 2} }
 // }
+interface TimeSeriesItem {
+  maleCount: number;
+  femaleCount: number;
+  unknownCount: number;
+  totalCount: number;
+  maxGroup: string; // 또는 적절한 타입
+}
+
 type AggregatedCounts = {
   maleCount: number;
   femaleCount: number;
@@ -77,11 +85,14 @@ const initialOptions: ApexOptions = {
     size: 0, // 포인트 마커의 크기를 설정합니다.
   },
   xaxis: {
+    title: {
+      text: "시간",
+    },
     type: "category", //timslot
     categories: [""], // 배열
-    labels: {
-      // x축 레이블 포맷 설정
-    },
+    // labels: {
+
+    // },
   },
 
   yaxis: {
@@ -89,7 +100,7 @@ const initialOptions: ApexOptions = {
       text: "조회수", // y축 타이틀 설정
     },
     min: 0, // y축 최소값 설정
-    // 추가적인 y축 설정
+    tickAmount: 10,
   },
   tooltip: {
     shared: true,
@@ -108,8 +119,8 @@ const initialOptions: ApexOptions = {
     position: "top", // 범례의 위치 설정
     horizontalAlign: "right", // 범례의 수평 정렬 설정
     floating: true,
-    offsetY: -25,
-    offsetX: -5,
+    offsetY: 5,
+    offsetX: 5,
   },
   responsive: [
     {
@@ -148,7 +159,19 @@ const HitsByAgeGroup = () => {
         return `${ageGroup}대`;
     }
   };
-
+  const getAgeGroupLabelN = (ageGroup) => {
+    const ageGroupNumber = Number(ageGroup);
+    switch (ageGroupNumber) {
+      case 0:
+        return "기타";
+      case 9:
+        return "10대 이하";
+      case 70:
+        return "70대 이상";
+      default:
+        return `${ageGroupNumber}대`;
+    }
+  };
   const [series, setSeries] = useState([]);
   const [options, setOptions] = useState<ApexOptions>(initialOptions);
 
@@ -189,49 +212,74 @@ const HitsByAgeGroup = () => {
           params: { date: selectedDate, ageGroup: selectedAgeGroup },
         });
         const responseData = response.data;
+        console.log(`responseData: ${responseData}`);
+        console.log(`responseData: ${JSON.stringify(responseData)}`);
+
+        // 시간대 추출 및 정렬
+        const timeCategories = Object.keys(responseData).sort((a, b) => a.localeCompare(b));
+        // 그래프 옵션 업데이트
+        setOptions((prevOptions) => ({
+          ...prevOptions,
+          xaxis: {
+            ...prevOptions.xaxis,
+            categories: timeCategories, // x축 카테고리 설정
+          },
+        }));
 
         // 시간대별 연령대별 성별 조회수 계산
-        let timeSeriesData: Record<string, any> = {};
-
+        const timeSeriesData: Record<string, TimeSeriesItem> = {};
+        //
         Object.entries(responseData).forEach(([time, ageGroups]) => {
           let maleCount = 0;
           let femaleCount = 0;
+          let unknownCount = 0;
           let maxGroup = { group: "", count: 0 };
 
           Object.entries(ageGroups).forEach(([group, counts]) => {
             maleCount += counts.Male || 0;
             femaleCount += counts.Female || 0;
-            let totalCount = counts.Male + counts.Female + (counts.Unknown || 0);
+            unknownCount += counts.Unknown || 0;
+            let totalCount = (counts.Male || 0) + (counts.Female || 0) + (counts.Unknown || 0);
             if (totalCount > maxGroup.count) {
               maxGroup = { group, count: totalCount };
             }
           });
-
+          // 시간대별 정렬
           timeSeriesData[time] = {
             maleCount,
             femaleCount,
+            unknownCount,
+            totalCount: maleCount + femaleCount + unknownCount,
             maxGroup: maxGroup.group,
           };
         });
+        // 오름차순 정렬
+        const sortedTimeSeriesData: Record<string, TimeSeriesItem> = Object.entries(timeSeriesData)
+          .sort((a, b) => a[0].localeCompare(b[0]))
+          .reduce((obj, [time, data]) => ({ ...obj, [time]: data as TimeSeriesItem }), {});
 
         setTableData(
-          Object.entries(timeSeriesData).map(([time, data]) => ({
+          Object.entries(sortedTimeSeriesData).map(([time, data]) => ({
             time,
+            maxGroup: data.maxGroup,
+            totalCount: data.totalCount,
+            unknownCount: data.unknownCount,
             maleCount: data.maleCount,
             femaleCount: data.femaleCount,
-            maxGroup: data.maxGroup,
           })),
         );
 
         // 연령별 및 성별별 총 조회수 계산
-        let maleSeriesData = [];
-        let femaleSeriesData = [];
+        const maleSeriesData = [];
+        const femaleSeriesData = [];
+        const unknownSeriesData = [];
         let totalSeriesData = [];
 
-        Object.keys(timeSeriesData).forEach((time) => {
-          maleSeriesData.push(timeSeriesData[time].maleCount);
-          femaleSeriesData.push(timeSeriesData[time].femaleCount);
-          totalSeriesData.push(timeSeriesData[time].maleCount + timeSeriesData[time].femaleCount);
+        Object.keys(sortedTimeSeriesData).forEach((time) => {
+          maleSeriesData.push(sortedTimeSeriesData[time].maleCount);
+          femaleSeriesData.push(sortedTimeSeriesData[time].femaleCount);
+          unknownSeriesData.push(sortedTimeSeriesData[time].unknownCount);
+          totalSeriesData.push(sortedTimeSeriesData[time].totalCount);
         });
 
         setSeries([
@@ -243,65 +291,8 @@ const HitsByAgeGroup = () => {
         console.error("Error fetching hits by age group:", error);
       }
     };
-
     getHitsData();
   }, [selectedDate, selectedAgeGroup]);
-
-  // // 시간대별로 전체 조회수를 합산
-  // const aggregatedData = Object.entries(responseData).map(([time, ageGroups]) => {
-  //   //객체->배열 : 전체 조회수
-  //   const totalHits = Object.values(ageGroups).reduce((sum, group) => sum + group.Male + group.Female, 0);
-  //   return { time, totalHits };
-  // });
-  // 차트 데이터로 변환
-  // const categories = aggregatedData.map((item) => item.time);
-  // const data = aggregatedData.map((item) => item.totalHits);
-  // setSeries([{ name: `Age Group ${selectedAgeGroup}`, data }]);
-  // setOptions((prevOptions) => ({
-  //   ...prevOptions,
-  //   xaxis: { ...prevOptions.xaxis, categories },
-  // }));
-
-  //연령대의 시간대별 조회수 배열
-  // 각 연령대별로 시리즈 데이터를 저장할 객체
-  //       const ageGroupSeries: Record<number, number[]> = {};
-
-  //       //엔트리(키-값 쌍)
-  //       // 시간대별로 순회
-  //       Object.entries(responseData).forEach(([time, ageGroups]) => {
-  //         //counts: 성별별 조회수
-  //         Object.entries(ageGroups).forEach(([ageGroup, counts]) => {
-  //           // 해당 연령대의 배열이 없으면 초기화
-  //           if (!ageGroupSeries[ageGroup]) {
-  //             ageGroupSeries[ageGroup] = [];
-  //           }
-
-  //           // 연령대별 조회수 합산
-  //           const totalHits = counts.Male + counts.Female;
-  //           ageGroupSeries[ageGroup].push(totalHits);
-  //         });
-  //       });
-
-  //       // 차트 데이터로 변환
-  //       const categories = Object.keys(responseData);
-  //       const seriesData = Object.entries(ageGroupSeries).map(([ageGroup, data]) => ({
-  //         name: `${ageGroup}대`,
-  //         data,
-  //       }));
-
-  //       setSeries(seriesData);
-  //       setOptions((prevOptions) => ({
-  //         ...prevOptions,
-  //         xaxis: { ...prevOptions.xaxis, categories },
-  //
-  //       }));
-  //     } catch (error) {
-  //       console.error("Error fetching hits by age group:", error);
-  //     }
-  //   };
-
-  //   getHitsData();
-  // }, [selectedDate, selectedAgeGroup]);
 
   const handleAgeGroupChange = (event) => {
     // setSelectedAgeGroup(Number(event.target.value));
@@ -316,17 +307,23 @@ const HitsByAgeGroup = () => {
     <table>
       <thead>
         <tr>
-          <th>Time</th>
-          <th>Male</th>
-          <th>Female</th>
+          <th>시간대</th>
+          <th>최다 조회 연령대</th>
+          <th>전체</th>
+          <th>남성</th>
+          <th>여성</th>
+          <th>기타</th>
         </tr>
       </thead>
       <tbody>
         {tableData.map((row, index) => (
           <tr key={index}>
             <td>{row.time}</td>
+            <td>{getAgeGroupLabelN(row.maxGroup)}</td>
+            <td>{row.totalCount}</td>
             <td>{row.maleCount}</td>
             <td>{row.femaleCount}</td>
+            <td>{row.unknownCount}</td>
           </tr>
         ))}
       </tbody>
