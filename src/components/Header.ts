@@ -15,8 +15,3 @@ export const HeaderContainer = styled.div`
     width: 85%;
   }
 `;
-
-
-
-
-

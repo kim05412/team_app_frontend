@@ -167,6 +167,26 @@ const BookTable = () => {
       setSelectedBooks([...selectedBooks, itemId]);
     }
   };
+  //수정
+  //버튼-> 모달창 open
+  const handleEditClick = (book: SimplifiedBook) => {
+    setCurrentEditBook(book);
+    setIsUpdateModalOpen(true);
+  };
+
+  const handleSaveEdit = (editedBook) => {
+    // 서버에 수정 요청을 보냅니다.
+    updateBookOnServer(editedBook).then((response) => {
+      if (response) {
+        setUpdateData((prev) => !prev);
+        alert("수정이 완료되었습니다.");
+
+        // 여기에 서버에서 가져온 새로운 도서 목록으로 상태를 업데이트하는 코드를 추가합니다.
+      } else {
+        alert("수정에 실패했습니다.");
+      }
+    });
+  };
 
   // 여러개 삭제 -> 리스트
   const deleteBook = async (selectedBooks) => {
@@ -225,27 +245,6 @@ const BookTable = () => {
     };
   }, [isEditing, selectedBooks]);
 
-  //수정
-  //버튼-> 모달창 open
-  const handleEditClick = (book: SimplifiedBook) => {
-    setCurrentEditBook(book);
-    setIsUpdateModalOpen(true);
-  };
-
-  const handleSaveEdit = (editedBook) => {
-    // 서버에 수정 요청을 보냅니다.
-    updateBookOnServer(editedBook).then((response) => {
-      if (response) {
-        setUpdateData((prev) => !prev);
-        alert("수정이 완료되었습니다.");
-
-        // 여기에 서버에서 가져온 새로운 도서 목록으로 상태를 업데이트하는 코드를 추가합니다.
-      } else {
-        alert("수정에 실패했습니다.");
-      }
-    });
-  };
-
   // 서버 통신
   const updateBookOnServer = async (book) => {
     try {
@@ -282,7 +281,7 @@ const BookTable = () => {
               <Button onClick={handleAdd}>추가하기</Button>
               <div>
                 {isEditing && (
-                  <Button onClick={handleDelete} onKeyPress={handleKeyDown}>
+                  <Button onClick={handleDelete} onKeyPress={handleKeyDown} style={{ marginRight: "10px" }}>
                     삭제하기
                   </Button>
                 )}
@@ -299,7 +298,7 @@ const BookTable = () => {
           <table style={{ overflowX: "auto" }}>
             <thead>
               <tr>
-                {isEditing && <th>삭제</th>}
+                {isEditing && <th className="margin-right-10px">삭제</th>}
                 {isEditing && <th>수정</th>}
                 {columns.map((column) => (
                   <th key={column}>{column}</th>
