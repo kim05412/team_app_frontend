@@ -25,7 +25,7 @@ const BookForm = ({ onSave, onClose }) => {
   const categoryIdRef = useRef() as MutableRefObject<HTMLInputElement>;
   const categoryNameRef = useRef() as MutableRefObject<HTMLInputElement>;
   const customerReviewRankRef = useRef() as MutableRefObject<HTMLInputElement>;
-
+  //서버 데이터 전송
   const createBookData = async (book, isTempBook) => {
     try {
       const response = await axios.post(`${BASE_URL}/add`, book);
@@ -43,7 +43,7 @@ const BookForm = ({ onSave, onClose }) => {
       }
     }
   };
-
+  //type Scribt , Omit : 특정 속성들을 제외한 새로운 타입을 생성
   const handleSave = async () => {
     const newBook: Omit<SimplifiedBook, "id" | "createdDate"> = {
       publisher: publisherRef.current.value,
@@ -202,7 +202,7 @@ const BookForm = ({ onSave, onClose }) => {
         </label>
         <label>
           <span>출판일 :</span>
-          <input ref={pubDateRef} placeholder="출판일을 입력해주세요 (예: 2022-01-01)" />
+          <input ref={pubDateRef} placeholder="출판일을 입력해주세요 (예: 2023-00-00)" />
         </label>
         <label>
           <span>설명 :</span>
