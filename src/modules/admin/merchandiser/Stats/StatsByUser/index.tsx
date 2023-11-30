@@ -488,6 +488,7 @@ const HitsByAgeGroup = () => {
   );
 };
 export default HitsByAgeGroup;
+
 // 도서 특성별 조회수를 집계하는 함수
 // const aggregateFeatureCounts = (responseData: HitsDataWithBooks, feature: "publisher" | "author" | "title") => {
 //   const featureCounts: Record<string, number> = {};

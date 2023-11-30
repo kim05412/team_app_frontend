@@ -7,11 +7,7 @@ const MerchandiserManagement = () => {
       <HeaderContainer>
         <p>MD 페이지</p>
       </HeaderContainer>
-      {/* <StatsByTime /> */}
       <HitsByAgeGroup />
-      {/* <Merchandise /> */}
-
-      {/* <HitsByTime /> */}
     </div>
   );
 };
