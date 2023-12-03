@@ -1,4 +1,4 @@
-import { useState, useEffect, MutableRefObject, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   BookContainer,
@@ -192,7 +192,7 @@ const BookTable = () => {
   const deleteBook = async (selectedBooks) => {
     try {
       console.log(selectedBooks);
-      const response = await axios.delete(`${BASE_URL}`, {
+      const response = await axios.delete(`${BASE_URL}/books`, {
         params: {
           itemIds: selectedBooks.join(","),
         },
@@ -248,7 +248,7 @@ const BookTable = () => {
   // 서버 통신
   const updateBookOnServer = async (book) => {
     try {
-      const response = await axios.put(`${BASE_URL}/${book.itemId}`, book, {
+      const response = await axios.put(`${BASE_URL}/books/${book.itemId}`, book, {
         headers: {
           "Content-Type": "application/json",
         },

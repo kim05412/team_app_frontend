@@ -6,6 +6,7 @@ import ReactApexChart from "react-apexcharts";
 import { ApexOptions } from "apexcharts";
 import { useNavigate } from "react-router-dom";
 import { StatsContainer } from "../style";
+import { BASE_URL } from "@/modules/admin/book/Book";
 
 // 예를 들어, 서버로부터 받을 데이터의 형태가 다음과 같다고 가정합니다.
 // {
@@ -254,7 +255,7 @@ const HitsByAgeGroup = () => {
   useEffect(() => {
     const getHitsData = async () => {
       try {
-        const response = await axios.get<HitsDataWithBooks>(`${Hits_URL}/time/age-group`, {
+        const response = await axios.get<HitsDataWithBooks>(`${BASE_URL}/hits/time/age-group`, {
           params: { date: selectedDate, ageGroup: selectedAgeGroup },
         });
         const responseData = response.data;

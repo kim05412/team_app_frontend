@@ -2,6 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 import { FormContainer } from "../../book/BookForm/styles";
 import { TodayContainer } from "./style";
+import { BASE_URL } from "../../book/Book";
 
 const TodayBook = () => {
   const [itemId, setItemId] = useState("");
@@ -26,7 +27,7 @@ const TodayBook = () => {
     });
 
     try {
-      const response = await axios.post("/today", formData, {
+      const response = await axios.post(`${BASE_URL}/today`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
