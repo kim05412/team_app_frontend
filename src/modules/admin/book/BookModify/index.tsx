@@ -1,6 +1,5 @@
 import { useState } from "react";
 import Modal from "./modal";
-import { FormContainer } from "../BookForm/styles";
 import { ModifyContainer } from "./style";
 
 const UpdateModal = ({ book, isOpen, onClose, onSave }) => {

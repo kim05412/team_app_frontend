@@ -1,6 +1,5 @@
 import axios from "axios";
 import { useState, useEffect, Component } from "react";
-import { Hits_URL } from "../../Stats";
 import { TableContainer } from "@/modules/admin/book/BookTable/styles";
 import ReactApexChart from "react-apexcharts";
 import { ApexOptions } from "apexcharts";
@@ -255,7 +254,7 @@ const HitsByAgeGroup = () => {
   useEffect(() => {
     const getHitsData = async () => {
       try {
-        const response = await axios.get<HitsDataWithBooks>(`${BASE_URL}/hits/time/age-group`, {
+        const response = await axios.get<HitsDataWithBooks>(`${BASE_URL()}/hits/time/age-group`, {
           params: { date: selectedDate, ageGroup: selectedAgeGroup },
         });
         const responseData = response.data;

@@ -72,9 +72,9 @@ const BookTable = () => {
   const [selectedBooks, setSelectedBooks] = useState<number[]>([]);
 
   //수정
-  const handleClose = () => {
-    setIsUpdateModalOpen(false);
-  };
+  // const handleClose = () => {
+  //   setIsUpdateModalOpen(false);
+  // };
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [currentEditBook, setCurrentEditBook] = useState<SimplifiedBook | null>(null);
 
@@ -82,7 +82,7 @@ const BookTable = () => {
   useEffect(() => {
     const getBooks = async () => {
       try {
-        const response = await axios.get(`${BASE_URL}/cache`);
+        const response = await axios.get(`${BASE_URL()}/books/cache`);
         setBooks(response.data);
         console.log("1.서버에서 렌더링 요청 받음");
       } catch (error) {
@@ -96,7 +96,7 @@ const BookTable = () => {
   const handleAdd = () => {
     setIsModalOpen(true);
   };
-  // 서버로 전달
+  // 추가 서버로 전달
   const handleSaved = async (response) => {
     if (response) {
       console.log("데이터 성공적으로 추가됨.");
@@ -192,7 +192,7 @@ const BookTable = () => {
   const deleteBook = async (selectedBooks) => {
     try {
       console.log(selectedBooks);
-      const response = await axios.delete(`${BASE_URL}/books`, {
+      const response = await axios.delete(`${BASE_URL()}/books`, {
         params: {
           itemIds: selectedBooks.join(","),
         },
@@ -248,7 +248,7 @@ const BookTable = () => {
   // 서버 통신
   const updateBookOnServer = async (book) => {
     try {
-      const response = await axios.put(`${BASE_URL}/books/${book.itemId}`, book, {
+      const response = await axios.put(`${BASE_URL()}/books/${book.itemId}`, book, {
         headers: {
           "Content-Type": "application/json",
         },
