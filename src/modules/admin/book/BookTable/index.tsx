@@ -85,6 +85,7 @@ const BookTable = () => {
         const response = await axios.get(`${BASE_URL()}/books/cache`);
         setBooks(response.data);
         console.log("1.서버에서 렌더링 요청 받음");
+        console.log("jenkins 자동화 테스트");
       } catch (error) {
         console.log(error);
       }
