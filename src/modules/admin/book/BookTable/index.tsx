@@ -193,6 +193,9 @@ const BookTable = () => {
   const deleteBook = async (selectedBooks) => {
     try {
       console.log(selectedBooks);
+      // 각 책 객체에서 itemId만 추출
+      // const itemIds = selectedBooks.map((book) => book.itemId);
+      // console.log(itemIds);
       const response = await axios.delete(`${BASE_URL()}/books`, {
         params: {
           itemIds: selectedBooks.join(","),
@@ -304,7 +307,7 @@ const BookTable = () => {
                 {columns.map((column) => (
                   <th key={column}>{column}</th>
                 ))}
-                {/* 추가 */}
+                {/* 여러개 선택 */}
                 {viewAll && additionalColumns.map((column) => <th key={column}>{column}</th>)}
               </tr>
             </thead>
