@@ -1,13 +1,13 @@
 // export const BASE_URL = "http://localhost:8082/books";
 
 //location.hostname이 local인지 check하는 함수
-function isLocalhost(): boolean {
+export function isLocalhost(): boolean {
   return ["localhost", "127.0.0.1"].includes(window.location.hostname);
 }
 
 //실행 환경에 맞게 API URL 생성하는 함수
 export function BASE_URL(): string {
-  return `${isLocalhost() ? "http" : "https"}://${isLocalhost() ? `${window.location.hostname}:8082/api` : window.location.hostname}/api`;
+  return `${isLocalhost() ? "http" : "https"}://${isLocalhost() ? `${window.location.hostname}:8082/api` : `${window.location.hostname}/api`}`;
 }
 
 export interface SimplifiedBook {

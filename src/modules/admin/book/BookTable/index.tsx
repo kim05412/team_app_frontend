@@ -12,7 +12,7 @@ import {
   TableContainer,
 } from "./styles";
 import axios from "axios";
-import { BASE_URL, SimplifiedBook } from "../Book";
+import { BASE_URL, SimplifiedBook, isLocalhost } from "../Book";
 import BookForm from "../BookForm";
 import Modal from "../BookForm/modal";
 import UpdateModal from "../BookModify";
@@ -82,6 +82,7 @@ const BookTable = () => {
   useEffect(() => {
     const getBooks = async () => {
       try {
+        console.log(window.location.hostname);
         const response = await axios.get(`${BASE_URL()}/books/cache`);
         setBooks(response.data);
         console.log("1.서버에서 렌더링 요청 받음");
