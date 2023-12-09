@@ -1,5 +1,4 @@
 import styled from "styled-components";
-import Modal from "../BookForm/modal";
 
 // jsx스타일-css
 export const BookContainer = styled.div`

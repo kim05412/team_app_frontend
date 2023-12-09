@@ -45,15 +45,15 @@ interface AgeGroupCounts {
 interface TimeSlotData {
   [timeSlot: string]: AgeGroupCounts;
 }
-interface HitsData {
-  [time: string]: {
-    [ageGroup: number]: {
-      Male: number;
-      Female: number;
-      Unknown: number;
-    };
-  };
-}
+// interface HitsData {
+//   [time: string]: {
+//     [ageGroup: number]: {
+//       Male: number;
+//       Female: number;
+//       Unknown: number;
+//     };
+//   };
+// }
 //도서
 interface GenderCount {
   Male: number;

@@ -12,7 +12,7 @@ import {
   TableContainer,
 } from "./styles";
 import axios from "axios";
-import { BASE_URL, SimplifiedBook, isLocalhost } from "../Book";
+import { BASE_URL, SimplifiedBook } from "../Book";
 import BookForm from "../BookForm";
 import Modal from "../BookForm/modal";
 import UpdateModal from "../BookModify";
@@ -180,6 +180,7 @@ const BookTable = () => {
     // 서버에 수정 요청을 보냅니다.
     updateBookOnServer(editedBook).then((response) => {
       if (response) {
+        // 토클 true/false -? false/true -> 데이터 변경 알림
         setUpdateData((prev) => !prev);
         alert("수정이 완료되었습니다.");
 
@@ -204,14 +205,19 @@ const BookTable = () => {
       });
 
       if (response.data && response.data.deletedBooks) {
-        // alert(
-        //   `총 ${response.data.deletedBooks.length}개의 도서정보가 성공적으로 삭제 되었습니다.${response.data.deletedBooks}`,
-        // );
+        setUpdateData((prev) => !prev);
         alert(
-          `총 ${
-            response.data.deletedBooks.length
-          }개의 도서정보가 성공적으로 삭제 되었습니다. 삭제된 도서 ID: ${response.data.deletedBooks.join(", ")}`,
+          `총 ${response.data.deletedBooks.length}개의 도서정보가 성공적으로 삭제 되었습니다.${response.data.deletedBooks}`,
         );
+        // alert(
+        //   `총 ${
+        //     response.data.deletedBooks.length
+        //   }개의 도서정보가 성공적으로 삭제 되었습니다. 삭제된 도서 ID: ${response.data.deletedBooks.join(", ")}`,
+        // );
+        // alert("삭제 성공.");
+
+        // 삭제된 도서를 상태에서 제거 -> 새로 고침 안하고 로컬에도 삭제 해줌
+        // setBooks(currentBooks => currentBooks.filter(book => !response.data.deletedBooks.includes(book.itemId)));
       } else {
         alert("삭제된 도서정보가 없습니다.");
       }
@@ -226,7 +232,6 @@ const BookTable = () => {
       if (confirmDelete) {
         try {
           // selectedBooks === itemIds
-          setUpdateData((prev) => !prev);
           deleteBook(selectedBooks);
           setSelectedBooks([]);
         } catch (error) {
@@ -260,7 +265,7 @@ const BookTable = () => {
       });
       return response;
     } catch (error) {
-      console.error("서버에 도서 정보를 업데이트하는데 실패했습니다.", error);
+      console.error("서버에 도서 삭제를 업데이트하는데 실패했습니다.", error);
       throw error;
     }
   };
