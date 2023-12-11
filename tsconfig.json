@@ -23,7 +23,6 @@
           "skipLibCheck": true,
           "allowSyntheticDefaultImports": true,
           "esModuleInterop": true
-          // 다른 컴파일러 옵션들...
         }
       }
     ],

@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   BookContainer,
   Button,
@@ -17,6 +16,7 @@ import BookForm from "../BookForm";
 import Modal from "../BookForm/modal";
 import UpdateModal from "../BookModify";
 import UpModal from "../BookModify/modal";
+import useSWR, { mutate } from "swr";
 
 const columns = ["id", "createdDate", "publisher", "title", "author"];
 const additionalColumns = [
@@ -31,10 +31,10 @@ const additionalColumns = [
   "customerReviewRank",
 ];
 
+const fetcher = (url) => axios.get(url).then((res) => res.data);
+
 const BookTable = () => {
-  // Read
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const navigate = useNavigate();
   const [searchOption, setSearchOption] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const highlightSearchTerm = (text: string, searchTerm: string) => {
@@ -58,13 +58,18 @@ const BookTable = () => {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const [viewAll, setViewAll] = useState(false);
   const [filteredBooks, setFilteredBooks] = useState<SimplifiedBook[]>([]);
-  const [books, setBooks] = useState<SimplifiedBook[]>([]);
-  // update
-  const [updateData, setUpdateData] = useState(false);
-  // filteredBooks 없으면 books
+  // SWR을 사용하여 데이터를 가져오는 부분
+  const { data, error } = useSWR(`${BASE_URL()}/books/cache?page=${currentPage}&size=${itemsPerPage}`, fetcher);
+  // const [books, setBooks] = useState<SimplifiedBook[]>([]); //   // filteredBooks 없으면 books
+  //데이터 슬라이싱
   const currentBooks = searchTerm
     ? filteredBooks.slice(indexOfFirstItem, indexOfLastItem)
-    : books.slice(indexOfFirstItem, indexOfLastItem);
+    : data
+    ? data.slice(indexOfFirstItem, indexOfLastItem)
+    : []; //SWR 전 useState 이용
+
+  // update
+  // const [updateData, setUpdateData] = useState(false); //햣 SWR 전 조회 렌더링 ->useEffect이용 =>data:SWR 변경
 
   //선택
   const [isEditing, setIsEditing] = useState(false);
@@ -72,29 +77,20 @@ const BookTable = () => {
   const [selectedBooks, setSelectedBooks] = useState<number[]>([]);
 
   //수정
-  // const handleClose = () => {
-  //   setIsUpdateModalOpen(false);
-  // };
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [currentEditBook, setCurrentEditBook] = useState<SimplifiedBook | null>(null);
 
   // 함수 정의
+  //피네이션 -> lazy loading
   useEffect(() => {
-    const getBooks = async () => {
-      try {
-        console.log(window.location.hostname);
-        const response = await axios.get(`${BASE_URL()}/books/cache`);
-        setBooks(response.data);
-        console.log("1.서버에서 렌더링 요청 받음");
-        console.log("jenkins 자동화 테스트");
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    getBooks();
-  }, [updateData]);
+    // 데이터가 존재하고, 현재 페이지가 첫 페이지가 아닌 경우에만 추가 데이터 로딩
+    if (data?.books && currentPage > 1) {
+      setFilteredBooks((prevBooks) => [...prevBooks, ...data.books]);
+    } else if (data?.books) {
+      setFilteredBooks(data.books);
+    }
+  }, [data, currentPage]);
 
-  // ParentComponent
   const handleAdd = () => {
     setIsModalOpen(true);
   };
@@ -102,7 +98,8 @@ const BookTable = () => {
   const handleSaved = async (response) => {
     if (response) {
       console.log("데이터 성공적으로 추가됨.");
-      setUpdateData((prev) => !prev);
+      mutate(`${BASE_URL()}/books/cache`); // SWR 캐시 갱신
+      // setUpdateData((prev) => !prev); // SWR 전 조회 렌더링 ->useEffect이용
       console.log("2.서버로 렌더링 요청 보냄");
     }
   };
@@ -113,7 +110,7 @@ const BookTable = () => {
   };
   // 검색 dropdown
   const handleSearchBtn = () => {
-    const results = books.filter((book) =>
+    const results = data.filter((book) =>
       searchOption === ""
         ? Object.values(book).some(
             (value) => value && value.toString().toLowerCase().includes(searchTerm.toLowerCase()),
@@ -175,13 +172,27 @@ const BookTable = () => {
     setCurrentEditBook(book);
     setIsUpdateModalOpen(true);
   };
-
+  //수정 서버 통신
+  const updateBookOnServer = async (book) => {
+    try {
+      const response = await axios.put(`${BASE_URL()}/books/${book.itemId}`, book, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      return response;
+    } catch (error) {
+      console.error("서버에 도서 삭제를 업데이트하는데 실패했습니다.", error);
+      throw error;
+    }
+  };
   const handleSaveEdit = (editedBook) => {
     // 서버에 수정 요청을 보냅니다.
     updateBookOnServer(editedBook).then((response) => {
       if (response) {
+        mutate(`${BASE_URL()}/books/cache`); // SWR 캐시 갱신
         // 토클 true/false -? false/true -> 데이터 변경 알림
-        setUpdateData((prev) => !prev);
+        // setUpdateData((prev) => !prev); // SWR 전 조회 렌더링 ->useEffect이용
         alert("수정이 완료되었습니다.");
 
         // 여기에 서버에서 가져온 새로운 도서 목록으로 상태를 업데이트하는 코드를 추가합니다.
@@ -205,19 +216,11 @@ const BookTable = () => {
       });
 
       if (response.data && response.data.deletedBooks) {
-        setUpdateData((prev) => !prev);
+        mutate(`${BASE_URL()}/books/cache`); // SWR 캐시 갱신
+        // setUpdateData((prev) => !prev); //SWR 전 조회 렌더링 ->useEffect이용
         alert(
           `총 ${response.data.deletedBooks.length}개의 도서정보가 성공적으로 삭제 되었습니다.${response.data.deletedBooks}`,
         );
-        // alert(
-        //   `총 ${
-        //     response.data.deletedBooks.length
-        //   }개의 도서정보가 성공적으로 삭제 되었습니다. 삭제된 도서 ID: ${response.data.deletedBooks.join(", ")}`,
-        // );
-        // alert("삭제 성공.");
-
-        // 삭제된 도서를 상태에서 제거 -> 새로 고침 안하고 로컬에도 삭제 해줌
-        // setBooks(currentBooks => currentBooks.filter(book => !response.data.deletedBooks.includes(book.itemId)));
       } else {
         alert("삭제된 도서정보가 없습니다.");
       }
@@ -232,7 +235,7 @@ const BookTable = () => {
       if (confirmDelete) {
         try {
           // selectedBooks === itemIds
-          deleteBook(selectedBooks);
+          await deleteBook(selectedBooks);
           setSelectedBooks([]);
         } catch (error) {
           console.error("삭제 처리 중 오류가 발생했습니다", error);
@@ -255,20 +258,10 @@ const BookTable = () => {
     };
   }, [isEditing, selectedBooks]);
 
-  // 서버 통신
-  const updateBookOnServer = async (book) => {
-    try {
-      const response = await axios.put(`${BASE_URL()}/books/${book.itemId}`, book, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      return response;
-    } catch (error) {
-      console.error("서버에 도서 삭제를 업데이트하는데 실패했습니다.", error);
-      throw error;
-    }
-  };
+  // 에러 처리 ()
+  if (error) return <div>도서 목록을 불러오는데 실패했습니다.</div>;
+  // // 데이터 로딩 중 처리
+  if (!data) return <div>로딩 중...</div>;
 
   return (
     <div>
@@ -366,12 +359,17 @@ const BookTable = () => {
           <button onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>
             Previous
           </button>
-          {[...Array(Math.ceil(books.length / itemsPerPage))].map((_, index) => (
-            <button key={index} onClick={() => setCurrentPage(index + 1)} disabled={currentPage === index + 1}>
-              {index + 1}
-            </button>
-          ))}
-          <button onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage * itemsPerPage >= books.length}>
+          {/* cache없을때 */}
+          {data ? (
+            [...Array(Math.ceil(data.length / itemsPerPage))].map((_, index) => (
+              <button key={index} onClick={() => setCurrentPage(index + 1)} disabled={currentPage === index + 1}>
+                {index + 1}
+              </button>
+            ))
+          ) : (
+            <div>데이터 로딩 중...</div>
+          )}
+          <button onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage * itemsPerPage >= data.length}>
             Next
           </button>
         </div>
