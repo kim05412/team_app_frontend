@@ -1,58 +1,46 @@
 import axios from "axios";
 import { useState, useEffect } from "react";
-import { BASE_URL } from "@/modules/admin/book/Book";
 import { TableContainer } from "@/modules/admin/book/BookTable/styles";
 import ReactApexChart from "react-apexcharts";
 import { ApexOptions } from "apexcharts";
 import { useNavigate } from "react-router-dom";
 import { StatsContainer } from "../style";
+import { BASE_URL } from "@/modules/admin/book/Book";
 
-// 예를 들어, 서버로부터 받을 데이터의 형태가 다음과 같다고 가정합니다.
-// {
-//     "10:00": {10: {"Male": 1, "Female": 2}, 20: {"Male": 1, "Female": 2} },
-//     "11:00": {30: {"Male": 1, "Female": 2}, 40: {"Male": 1, "Female": 2} }
-// }
 interface TimeSeriesItem {
   maleCount: number;
   femaleCount: number;
   unknownCount: number;
   totalCount: number;
-  maxGroup: string; // 또는 적절한 타입
+  maxGroup: string;
 }
-
-type AggregatedCounts = {
-  maleCount: number;
-  femaleCount: number;
-  unknown: number;
-};
 interface GenderCount {
   Male: number;
   Female: number;
+  Unknown: number;
 }
-
 interface AgeGroupCounts {
   [ageGroup: string]: GenderCount;
 }
-
 interface TimeSlotData {
   [timeSlot: string]: AgeGroupCounts;
 }
-
-interface IStat {
-  key: string; // 시간대 (00:00, 01:00, ... 23:00)
-  value: number; // 해당 시간대의 조회수
+interface BookInfo {
+  title: string;
+  author: string;
+  publisher: string;
 }
-interface Hits {
-  [key: string]: number;
+// 기존의 GenderCount를 확장하여 books 속성을 추가
+interface AgeGroupDataWithBooks extends GenderCount {
+  books?: BookInfo[];
 }
 
-type HitsData = {
+// HitsData 인터페이스를 확장하여 AgeGroupDataWithBooks 사용
+interface HitsDataWithBooks {
   [time: string]: {
-    Male?: number; // 선택적으로 Male 속성이 존재할 수 있음
-    Female?: number; // 선택적으로 Female 속성이 존재할 수 있음
-    Unknown?: number; // 선택적으로 Unknown 속성이 존재할 수 있음
+    [ageGroup: number]: AgeGroupDataWithBooks;
   };
-};
+}
 
 const initialOptions: ApexOptions = {
   stroke: {
@@ -84,11 +72,8 @@ const initialOptions: ApexOptions = {
     title: {
       text: "시간",
     },
-    type: "category", //timslot
-    categories: [""], // 배열
-    // labels: {
-
-    // },
+    type: "category",
+    categories: [""],
   },
 
   yaxis: {
@@ -135,16 +120,57 @@ const initialOptions: ApexOptions = {
   ],
   colors: ["#3384C6", "#C63A29", "#24C497", "#F3B922", "#3D100B", "#522462"],
 };
+const initialPieOptions: ApexOptions = {
+  chart: {
+    type: "pie",
+    height: 350,
+  },
+  labels: [], // 데이터에 따라 레이블 설정
+  responsive: [
+    {
+      breakpoint: 480,
+      options: {
+        chart: {
+          width: 200,
+        },
+        legend: {
+          position: "bottom",
+        },
+      },
+    },
+  ],
+  fill: {
+    opacity: 1,
+  },
+  tooltip: {
+    y: {
+      formatter: (value) => `${value} 조회수`,
+    },
+  },
+  colors: [
+    "#3384C6",
+    "#C63A29",
+    "#b5e453",
+    "#D97559",
+    "#24C497",
+    "#F3B922",
+    "#3D100B",
+    "#fdc0c7",
+    "#522462",
+    "#CFCC80",
+    "#744465",
+  ],
+};
 const HitsByAgeGroup = () => {
-  const [isLoading, setIsLoading] = useState(true); // 로딩 상태 추가
-
   const [tableData, setTableData] = useState([]);
-  const [hits, setHits] = useState<TimeSlotData>({});
-  const today = new Date().toISOString().split("T")[0];
 
+  // const [hits, setHits] = useState<TimeSlotData>({});
+  // const today = new Date().toISOString().split("T")[0];
+  const today = "2023-12-12";
   const [selectedDate, setSelectedDate] = useState(today);
-  const [selectedAgeGroup, setSelectedAgeGroup] = useState(1);
+
   const [ageGroups] = useState([1, 9, 10, 20, 30, 40, 50, 60, 70]);
+  const [selectedAgeGroup, setSelectedAgeGroup] = useState(1);
   const getAgeGroupLabel = (ageGroup) => {
     switch (ageGroup) {
       case 1:
@@ -172,12 +198,38 @@ const HitsByAgeGroup = () => {
   };
   const [series, setSeries] = useState([]);
   const [options, setOptions] = useState<ApexOptions>(initialOptions);
+  //도서
+  // 도서 정보를 위한 차트 상태
+  const aggregateFeatureCounts = (responseData: HitsDataWithBooks, feature: "publisher" | "author" | "title") => {
+    const featureCounts: Record<string, number> = {};
+
+    // 연령대 순회 -> 연령대에서 조회된 도서 순회 ->
+    Object.values(responseData).forEach((ageGroups) => {
+      Object.values(ageGroups).forEach(({ books }) => {
+        books?.forEach((book) => {
+          const featureValue = book[feature];
+          if (featureValue !== "Unknown") {
+            // "Unknown" 값을 제외
+            featureCounts[featureValue] = (featureCounts[featureValue] || 0) + 1;
+          }
+        });
+      });
+    });
+
+    return featureCounts;
+  };
+  const [bookChartSeries, setBookChartSeries] = useState<ApexAxisChartSeries>([]);
+  const [bookChartOptions, setBookChartOptions] = useState<ApexOptions>(initialPieOptions);
+
+  // const [bookOptions, setBookOptions] = useState<ApexOptions>(initialOptions);
+  // 도서 정보를 위한 테이블 상태
+  const [selectedBookFeature, setSelectedBookFeature] = useState<"author" | "publisher" | "title">("author");
+  const [bookTableData, setBookTableData] = useState([]);
 
   useEffect(() => {
     const getHitsData = async () => {
-      setIsLoading(true);
       try {
-        const response = await axios.get<HitsData>(`${BASE_URL()}/hits/time/age-group`, {
+        const response = await axios.get<HitsDataWithBooks>(`${BASE_URL()}/hits/time/age-group`, {
           params: { date: selectedDate, ageGroup: selectedAgeGroup },
         });
         const responseData = response.data;
@@ -196,14 +248,24 @@ const HitsByAgeGroup = () => {
         }));
 
         // 시간대별 연령대별 성별 조회수 계산
+        //저장할 객체 생성
         const timeSeriesData: Record<string, TimeSeriesItem> = {};
         //
         Object.entries(responseData).forEach(([time, ageGroups]) => {
-          let maleCount = ageGroups.Male || 0; // Male 데이터가 없으면 0으로 처리
-          let femaleCount = ageGroups.Female || 0; // Female 데이터가 없으면 0으로 처리
-          let unknownCount = ageGroups.Unknown || 0; // Unknown 데이터가 없으면 0으로 처리
+          let maleCount = 0;
+          let femaleCount = 0;
+          let unknownCount = 0;
           let maxGroup = { group: "", count: 0 };
 
+          Object.entries(ageGroups).forEach(([group, counts]) => {
+            maleCount += counts.Male || 0;
+            femaleCount += counts.Female || 0;
+            unknownCount += counts.Unknown || 0;
+            let totalCount = (counts.Male || 0) + (counts.Female || 0) + (counts.Unknown || 0);
+            if (totalCount > maxGroup.count) {
+              maxGroup = { group, count: totalCount };
+            }
+          });
           // 시간대별 정렬
           timeSeriesData[time] = {
             maleCount,
@@ -247,15 +309,28 @@ const HitsByAgeGroup = () => {
           { name: "Female", data: femaleSeriesData, type: "column" },
           { name: "Total", data: totalSeriesData, type: "line" },
         ]);
-        setIsLoading(false);
+
+        const bookFeatureCounts = aggregateFeatureCounts(responseData, selectedBookFeature);
+        // bookFeatureCounts로부터 파이 차트용 데이터 생성
+
+        const chartSeriesData = Object.entries(bookFeatureCounts).map(([featureValue, count]) => {
+          console.log("chartSeriesData:", chartSeriesData);
+          return { name: featureValue, data: [count] };
+        });
+
+        setBookChartSeries(chartSeriesData);
+        // 파이 차트용 옵션 설정
+        setBookChartOptions((prevOptions) => ({
+          ...prevOptions,
+          labels: Object.keys(bookFeatureCounts), // 파이 차트의 레이블은 도서 특성의 이름들
+          // 기타 파이 차트 설정 (예: 색상, 툴팁 등)
+        }));
       } catch (error) {
         console.error("Error fetching hits by age group:", error);
-        setIsLoading(false);
       }
     };
     getHitsData();
-  }, [selectedDate, selectedAgeGroup]);
-  // 로딩 중일 때 로딩 인디케이터 표시
+  }, [selectedDate, selectedAgeGroup, selectedBookFeature]);
 
   const handleAgeGroupChange = (event) => {
     // setSelectedAgeGroup(Number(event.target.value));
@@ -292,9 +367,38 @@ const HitsByAgeGroup = () => {
       </tbody>
     </table>
   );
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
+  // 사용자가 도서 특성을 선택했을 때의 핸들러
+  const handleFeatureChange = (event) => {
+    setSelectedBookFeature(event.target.value);
+  };
+  // 파이차트 변형
+
+  const renderBookChart = () => (
+    <ReactApexChart options={bookChartOptions} series={bookChartSeries} type="pie" height={350} />
+  );
+  const renderBookTable = () => (
+    <table>
+      <thead>
+        <tr>
+          {/* <th>시간대</th> */}
+          {ageGroups.map((ageGroup) => (
+            <th key={ageGroup}>{`${getAgeGroupLabel(ageGroup)}`}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {bookTableData.map((row, index) => (
+          <tr key={index}>
+            <td>{row.time}</td>
+            {ageGroups.map((ageGroup) => (
+              <td key={ageGroup}>{row[ageGroup] ? row[ageGroup][selectedBookFeature] : "N/A"}</td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+
   return (
     <div>
       <StatsContainer>
@@ -325,11 +429,30 @@ const HitsByAgeGroup = () => {
         {/* 테이블 렌더링 부분 */}
         <div>
           {/* 기존의 컴포넌트 렌더링 */}
-          <TableContainer>{dailyTable()}</TableContainer>
+          <TableContainer>
+            <p>시간대별 사용자 연령별 조회수</p>
+            {dailyTable()}
+          </TableContainer>
         </div>
+        {/* 도서  */}
+        {/* <div>
+          <label htmlFor="book-feature-select">도서 특성:</label>
+          <select id="book-feature-select" value={selectedBookFeature} onChange={handleFeatureChange}>
+            <option value="author">저자</option>
+            <option value="publisher">출판사</option>
+            <option value="title">제목</option>
+          </select>
+        </div>
+        <h1>
+          {"<"}도서 특성별 사용자 조회수 통계{">"}
+        </h1>
+        <div>{renderBookChart()}</div> */}
+        {/* <div>
+          <p>도서의 특성별 조회수 </p>
+          <TableContainer>{renderBookTable()}</TableContainer>
+        </div> */}
       </StatsContainer>
     </div>
   );
 };
-
-export default HitsByAgeGroup;
+// export default HitsByAgeGroup;

@@ -60,6 +60,7 @@ const BookTable = () => {
   const [filteredBooks, setFilteredBooks] = useState<SimplifiedBook[]>([]);
   // SWR을 사용하여 데이터를 가져오는 부분
   const { data, error } = useSWR(`${BASE_URL()}/books/cache?page=${currentPage}&size=${itemsPerPage}`, fetcher);
+
   // const [books, setBooks] = useState<SimplifiedBook[]>([]); //   // filteredBooks 없으면 books
   //데이터 슬라이싱
   const currentBooks = searchTerm
@@ -81,12 +82,14 @@ const BookTable = () => {
   const [currentEditBook, setCurrentEditBook] = useState<SimplifiedBook | null>(null);
 
   // 함수 정의
-  //피네이션 -> lazy loading
+  //페이지네이션 -> lazy loading
   useEffect(() => {
-    // 데이터가 존재하고, 현재 페이지가 첫 페이지가 아닌 경우에만 추가 데이터 로딩
     if (data?.books && currentPage > 1) {
+      //기존의 데이터(prevBooks) 뒤에 추가
       setFilteredBooks((prevBooks) => [...prevBooks, ...data.books]);
+      // 첫 페이지/새 데이터 처음 로드
     } else if (data?.books) {
+      //완전히 대체
       setFilteredBooks(data.books);
     }
   }, [data, currentPage]);
