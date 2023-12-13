@@ -83,7 +83,12 @@ const BookTable = () => {
     const getBooks = async () => {
       try {
         console.log(window.location.hostname);
-        const response = await axios.get(`${BASE_URL()}/books/cache`);
+        const response = await axios.get(`${BASE_URL()}/books/cache`, {
+          params: {
+            page: currentPage,
+            size: itemsPerPage,
+          },
+        });
         setBooks(response.data);
         console.log("1.서버에서 렌더링 요청 받음");
         console.log("jenkins 자동화 테스트");
