@@ -397,3 +397,5 @@ const BookTable = () => {
     </div>
   );
 };
+
+export default BookTable;
