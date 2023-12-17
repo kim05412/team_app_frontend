@@ -34,7 +34,7 @@ const additionalColumns = [
 const BookTable = () => {
   // Read
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const [searchOption, setSearchOption] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const highlightSearchTerm = (text: string, searchTerm: string) => {
@@ -126,6 +126,14 @@ const BookTable = () => {
         : book[searchOption] && book[searchOption].toLowerCase().includes(searchTerm.toLowerCase()),
     );
     setFilteredBooks(results);
+    setCurrentPage(1);
+  };
+  //enter ->검색
+  const handleKeyPresSearch = (event) => {
+    if (event.key === "Enter") {
+      // Enter 키를 눌렀을 때 handleSearch 함수를 호출합니다.
+      handleSearchBtn();
+    }
   };
 
   // 조회
@@ -147,13 +155,6 @@ const BookTable = () => {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-  };
-
-  const handleKeyPresSearch = (event) => {
-    if (event.key === "Enter") {
-      // Enter 키를 눌렀을 때 handleSearch 함수를 호출합니다.
-      handleSearchBtn();
-    }
   };
   //선택
   const handleEditBtnClick = () => {
@@ -210,10 +211,10 @@ const BookTable = () => {
       });
 
       if (response.data && response.data.deletedBooks) {
-        setUpdateData((prev) => !prev);
-        alert(
-          `총 ${response.data.deletedBooks.length}개의 도서정보가 성공적으로 삭제 되었습니다.${response.data.deletedBooks}`,
-        );
+        // alert(
+        //   `총 ${response.data.deletedBooks.length}개의 도서정보가 성공적으로 삭제 되었습니다.${response.data.deletedBooks}`,
+        // );
+        alert(`총 ${response.data.deletedBooks.length}개의 도서정보가 성공적으로 삭제 되었습니다`);
         // alert(
         //   `총 ${
         //     response.data.deletedBooks.length
@@ -239,6 +240,7 @@ const BookTable = () => {
           // selectedBooks === itemIds
           deleteBook(selectedBooks);
           setSelectedBooks([]);
+          setUpdateData((prev) => !prev);
         } catch (error) {
           console.error("삭제 처리 중 오류가 발생했습니다", error);
         }
@@ -371,7 +373,7 @@ const BookTable = () => {
           <button onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>
             Previous
           </button>
-          {[...Array(Math.ceil(books.length / itemsPerPage))].map((_, index) => (
+          {[...Array(Math.ceil((searchTerm ? filteredBooks.length : books.length) / itemsPerPage))].map((_, index) => (
             <button key={index} onClick={() => setCurrentPage(index + 1)} disabled={currentPage === index + 1}>
               {index + 1}
             </button>
