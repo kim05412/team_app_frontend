@@ -19,7 +19,10 @@ interface TimeSeriesItem {
   totalCount: number;
   maxGroup: string; // 또는 적절한 타입
 }
-
+interface Counts {
+  Male?: number;
+  Female?: number;
+}
 interface GenderCounts {
   Male: number;
   Female: number;
@@ -183,23 +186,29 @@ const HitsByAgeGroup = () => {
         }));
 
         // 시간대별 연령대별 성별 조회수 계산
-        const timeSeriesData: Record<string, TimeSeriesItem> = {};
-
-        //
+        const timeSeriesData: Record<number, TimeSeriesItem> = {};
         Object.entries(responseData).forEach(([time, ageGroups]) => {
-          let maleCount = ageGroups.Male || 0; // Male 데이터가 없으면 0으로 처리
-          let femaleCount = ageGroups.Female || 0; // Female 데이터가 없으면 0으로 처리
-          let unknownCount = ageGroups.Unknown || 0; // Unknown 데이터가 없으면 0으로 처리
-          let maxGroup = { group: "", count: 0 };
+          let maleCount = 0;
+          let femaleCount = 0;
+          let unknownCount = 0;
+          let maxGroup = { group: 0, count: 0 };
 
-          const total = maleCount + femaleCount;
+          Object.entries(ageGroups).forEach(([group, counts]) => {
+            // counts의 타입을 Counts 인터페이스로 명시적으로 지정
+            const genderCounts = counts as Counts;
 
-          // 가장 많은 조회수를 가진 연령대 확인 및 업데이트
-          if (total > maxGroup.count) {
-            maxGroup = { group: "ageGroups", count: total };
-          }
+            if (genderCounts) {
+              const groupTotal = (genderCounts.Male || 0) + (genderCounts.Female || 0);
+              maleCount += genderCounts.Male || 0;
+              femaleCount += genderCounts.Female || 0;
 
-          // 시간대별 정렬
+              if (groupTotal > maxGroup.count) {
+                maxGroup = { group: Number(group), count: groupTotal };
+              }
+            }
+          });
+
+          // 시간대별 정보 업데이트
           timeSeriesData[time] = {
             maleCount,
             femaleCount,
