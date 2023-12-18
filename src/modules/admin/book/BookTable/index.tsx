@@ -17,6 +17,7 @@ import BookForm from "../BookForm";
 import Modal from "../BookForm/modal";
 import UpdateModal from "../BookModify";
 import UpModal from "../BookModify/modal";
+import useSWR, { mutate } from "swr";
 
 const columns = ["id", "createdDate", "publisher", "title", "author"];
 const additionalColumns = [
@@ -32,6 +33,7 @@ const additionalColumns = [
 ];
 
 const BookTable = () => {
+  const fetcher = (url: string) => axios.get(url).then((res) => res.data);
   // Read
   const [isModalOpen, setIsModalOpen] = useState(false);
   // const navigate = useNavigate();
@@ -60,7 +62,7 @@ const BookTable = () => {
   const [filteredBooks, setFilteredBooks] = useState<SimplifiedBook[]>([]);
   const [books, setBooks] = useState<SimplifiedBook[]>([]);
   // update
-  const [updateData, setUpdateData] = useState(false);
+  // const [updateData, setUpdateData] = useState(false);
   // filteredBooks 없으면 books
   const currentBooks = searchTerm
     ? filteredBooks.slice(indexOfFirstItem, indexOfLastItem)
@@ -78,26 +80,37 @@ const BookTable = () => {
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [currentEditBook, setCurrentEditBook] = useState<SimplifiedBook | null>(null);
 
-  // 함수 정의
+  const { data: fetchedBooksData } = useSWR(
+    `${BASE_URL()}/books/cache?page=${currentPage}&size=${itemsPerPage}`,
+    fetcher,
+  );
+  // SWR에서 데이터가 로드될 때 booksData 업데이트
   useEffect(() => {
-    const getBooks = async () => {
-      try {
-        console.log(window.location.hostname);
-        const response = await axios.get(`${BASE_URL()}/books/cache`, {
-          params: {
-            page: currentPage,
-            size: itemsPerPage,
-          },
-        });
-        setBooks(response.data);
-        console.log("1.서버에서 렌더링 요청 받음");
-        console.log("jenkins 자동화 테스트");
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    getBooks();
-  }, [currentPage, updateData]);
+    if (fetchedBooksData) {
+      setBooks(fetchedBooksData);
+    }
+  }, [fetchedBooksData]);
+
+  // 함수 정의
+  // useEffect(() => {
+  //   const getBooks = async () => {
+  //     try {
+  //       console.log(window.location.hostname);
+  //       const response = await axios.get(`${BASE_URL()}/books/cache`, {
+  //         params: {
+  //           page: currentPage,
+  //           size: itemsPerPage,
+  //         },
+  //       });
+  //       setBooks(response.data);
+  //       console.log("1.서버에서 렌더링 요청 받음");
+  //       console.log("jenkins 자동화 테스트");
+  //     } catch (error) {
+  //       console.log(error);
+  //     }
+  //   };
+  //   getBooks();
+  // }, [currentPage, updateData]);
 
   // ParentComponent
   const handleAdd = () => {
@@ -106,8 +119,9 @@ const BookTable = () => {
   // 추가 서버로 전달
   const handleSaved = async (response) => {
     if (response) {
+      mutate(`${BASE_URL()}/books/cache?page=${currentPage}&size=${itemsPerPage}`);
       console.log("데이터 성공적으로 추가됨.");
-      setUpdateData((prev) => !prev);
+      // setUpdateData((prev) => !prev);
       console.log("2.서버로 렌더링 요청 보냄");
     }
   };
@@ -187,10 +201,9 @@ const BookTable = () => {
     updateBookOnServer(editedBook).then((response) => {
       if (response) {
         // 토클 true/false -? false/true -> 데이터 변경 알림
-        setUpdateData((prev) => !prev);
+        // setUpdateData((prev) => !prev);
         alert("수정이 완료되었습니다.");
-
-        // 여기에 서버에서 가져온 새로운 도서 목록으로 상태를 업데이트하는 코드를 추가합니다.
+        mutate(`${BASE_URL()}/books/cache?page=${currentPage}&size=${itemsPerPage}`);
       } else {
         alert("수정에 실패했습니다.");
       }
@@ -238,9 +251,12 @@ const BookTable = () => {
       if (confirmDelete) {
         try {
           // selectedBooks === itemIds
-          deleteBook(selectedBooks);
+          await deleteBook(selectedBooks); // 삭제 요청이 성공한 후에
           setSelectedBooks([]);
-          setUpdateData((prev) => !prev);
+          // 여기에서 SWR를 다시 실행시키면 데이터가 삭제되고 다시 로드됩니다.
+          mutate(`${BASE_URL()}/books/cache?page=${currentPage}&size=${itemsPerPage}`);
+          window.location.reload();
+          // setUpdateData((prev) => !prev);
         } catch (error) {
           console.error("삭제 처리 중 오류가 발생했습니다", error);
         }
@@ -325,46 +341,47 @@ const BookTable = () => {
               </tr>
             </thead>
             <tbody>
-              {currentBooks.map((book) => (
-                <tr key={book.itemId}>
-                  {isEditing && (
-                    <td>
-                      <input
-                        type="checkbox"
-                        checked={selectedBooks.includes(book.itemId)}
-                        onChange={() => handleSelectBook(book.itemId)}
-                      />
-                    </td>
-                  )}
-                  {isEditing && (
-                    <td>
-                      <Button onClick={() => handleEditClick(book)}>수정하기</Button>
-                    </td>
-                  )}
-                  {(viewAll ? columns.concat(additionalColumns) : columns).map((column) => (
-                    <td key={column}>
-                      {book[column] !== undefined ? (
-                        <div
-                          style={{
-                            minWidth:
-                              column === "" || column === "title" || column === "author" || column === "publisher"
-                                ? "250px"
-                                : "auto",
-                          }}>
-                          {/* 문자열 */}
-                          {typeof book[column] === "string" &&
-                          searchTerm &&
-                          (searchOption === "" || searchOption === column)
-                            ? highlightSearchTerm(book[column], searchTerm)
-                            : book[column]}
-                        </div>
-                      ) : (
-                        <div style={{ textAlign: "center" }}>-</div>
-                      )}
-                    </td>
-                  ))}
-                </tr>
-              ))}
+              {currentBooks &&
+                currentBooks.map((book) => (
+                  <tr key={book.itemId}>
+                    {isEditing && (
+                      <td>
+                        <input
+                          type="checkbox"
+                          checked={selectedBooks.includes(book.itemId)}
+                          onChange={() => handleSelectBook(book.itemId)}
+                        />
+                      </td>
+                    )}
+                    {isEditing && (
+                      <td>
+                        <Button onClick={() => handleEditClick(book)}>수정하기</Button>
+                      </td>
+                    )}
+                    {(viewAll ? columns.concat(additionalColumns) : columns).map((column) => (
+                      <td key={column}>
+                        {book[column] !== undefined ? (
+                          <div
+                            style={{
+                              minWidth:
+                                column === "" || column === "title" || column === "author" || column === "publisher"
+                                  ? "250px"
+                                  : "auto",
+                            }}>
+                            {/* 문자열 */}
+                            {typeof book[column] === "string" &&
+                            searchTerm &&
+                            (searchOption === "" || searchOption === column)
+                              ? highlightSearchTerm(book[column], searchTerm)
+                              : book[column]}
+                          </div>
+                        ) : (
+                          <div style={{ textAlign: "center" }}>-</div>
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
             </tbody>
           </table>
         </TableContainer>
