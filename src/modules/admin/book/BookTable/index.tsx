@@ -272,7 +272,7 @@ const BookTable = () => {
       });
       return response;
     } catch (error) {
-      console.error("서버에 도서 삭제를 업데이트하는데 실패했습니다.", error);
+      console.error("서버에 도서 업데이트하는데 실패했습니다.", error);
       throw error;
     }
   };

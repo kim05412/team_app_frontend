@@ -20,30 +20,17 @@ interface TimeSeriesItem {
   maxGroup: string; // 또는 적절한 타입
 }
 
-type AggregatedCounts = {
-  maleCount: number;
-  femaleCount: number;
-  unknown: number;
-};
-interface GenderCount {
+interface GenderCounts {
   Male: number;
   Female: number;
 }
 
 interface AgeGroupCounts {
-  [ageGroup: string]: GenderCount;
+  [ageGroup: string]: GenderCounts;
 }
 
 interface TimeSlotData {
   [timeSlot: string]: AgeGroupCounts;
-}
-
-interface IStat {
-  key: string; // 시간대 (00:00, 01:00, ... 23:00)
-  value: number; // 해당 시간대의 조회수
-}
-interface Hits {
-  [key: string]: number;
 }
 
 type HitsData = {
@@ -197,12 +184,20 @@ const HitsByAgeGroup = () => {
 
         // 시간대별 연령대별 성별 조회수 계산
         const timeSeriesData: Record<string, TimeSeriesItem> = {};
+
         //
         Object.entries(responseData).forEach(([time, ageGroups]) => {
           let maleCount = ageGroups.Male || 0; // Male 데이터가 없으면 0으로 처리
           let femaleCount = ageGroups.Female || 0; // Female 데이터가 없으면 0으로 처리
           let unknownCount = ageGroups.Unknown || 0; // Unknown 데이터가 없으면 0으로 처리
           let maxGroup = { group: "", count: 0 };
+
+          const total = maleCount + femaleCount;
+
+          // 가장 많은 조회수를 가진 연령대 확인 및 업데이트
+          if (total > maxGroup.count) {
+            maxGroup = { group: "ageGroups", count: total };
+          }
 
           // 시간대별 정렬
           timeSeriesData[time] = {
