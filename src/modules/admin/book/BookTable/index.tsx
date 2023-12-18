@@ -97,7 +97,7 @@ const BookTable = () => {
       }
     };
     getBooks();
-  }, [updateData]);
+  }, [currentPage, updateData]);
 
   // ParentComponent
   const handleAdd = () => {

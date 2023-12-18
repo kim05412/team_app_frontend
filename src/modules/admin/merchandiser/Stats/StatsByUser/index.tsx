@@ -142,7 +142,7 @@ const HitsByAgeGroup = () => {
   const [hits, setHits] = useState<TimeSlotData>({});
   const today = new Date().toISOString().split("T")[0];
 
-  const [selectedDate, setSelectedDate] = useState(today);
+  const [selectedDate, setSelectedDate] = useState("2023-11-18");
   const [selectedAgeGroup, setSelectedAgeGroup] = useState(1);
   const [ageGroups] = useState([1, 9, 10, 20, 30, 40, 50, 60, 70]);
   const getAgeGroupLabel = (ageGroup) => {
